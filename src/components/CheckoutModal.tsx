@@ -120,7 +120,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           <div className="flex items-center gap-2">
             <Flame className="w-4 h-4 text-amber-500 fill-amber-500" />
             <h3 className="font-heading font-bold text-sm text-white uppercase tracking-wider">
-              WatchPays Payment Gateway
+              Sunpays Payment Gateway
             </h3>
           </div>
           <button
@@ -161,7 +161,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               <div className="space-y-1">
                 <h4 className="text-base font-black font-heading text-white uppercase tracking-wider">
-                  Redirecting to WatchPays Gateway...
+                  Redirecting to Sunpays Gateway...
                 </h4>
                 <p className="text-xs text-gray-400 max-w-[280px] mx-auto">
                   Connecting to 100% secure encrypted payment portal. Please do not refresh.
@@ -194,13 +194,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   Connection Error
                 </h4>
                 <p className="text-xs text-rose-400/90 max-w-[280px] mx-auto">
-                  {errorMessage || 'Unable to communicate with WatchPays gateway.'}
+                  {errorMessage || 'Unable to communicate with Sunpays gateway.'}
                 </p>
               </div>
 
               <div className="flex gap-2 pt-2">
                 <button
-                  onClick={initiateWatchPaysPayment}
+                  onClick={initiateSunpaysPayment}
                   disabled={loading}
                   className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-heading font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                 >
@@ -220,7 +220,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           {/* Security guarantee */}
           <div className="pt-2 border-t border-white/5 flex items-center justify-center gap-1.5 text-[11px] text-emerald-400/90 font-medium">
             <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>256-Bit SSL Encrypted WatchPays Official Gateway</span>
+            <span>256-Bit SSL Encrypted Sunpays Official Gateway</span>
           </div>
         </div>
       </div>
