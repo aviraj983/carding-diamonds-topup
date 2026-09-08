@@ -8,7 +8,6 @@ const handler: Handler = async (event: HandlerEvent) => {
     "Access-Control-Allow-Headers": "Content-Type",
   };
 
-  // Handle CORS preflight
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 204, headers, body: "" };
   }
@@ -37,17 +36,16 @@ const handler: Handler = async (event: HandlerEvent) => {
     }
 
     const apiKey =
-      process.env.RAPIDAPI_KEY ||
-      "b9172a8c93msh580d2723f591e4bp1b75a7jsnbe815744d293";
-    const rapidApiHost = "id-game-checker.p.rapidapi.com";
-    const targetUrl = `https://${rapidApiHost}/ff-global/${encodeURIComponent(uid)}`;
+      process.env.NEFERBYTE_API_KEY ||
+      "7e7fd9cae78a542bf3ba679f94a5afa2";
+    const targetUrl = `https://api.neferbyte.com/game-id-checker/ff-global/${encodeURIComponent(uid)}`;
 
     const response = await fetch(targetUrl, {
       method: "GET",
       headers: {
-        "x-rapidapi-key": apiKey,
-        "x-rapidapi-host": rapidApiHost,
-        "content-type": "application/json",
+        "x-api-key": apiKey,
+        "Accept": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       },
     });
 
