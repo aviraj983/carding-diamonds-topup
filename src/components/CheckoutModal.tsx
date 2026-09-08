@@ -63,8 +63,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     return `${curr.symbol}${amount}`;
   };
 
-  // Initiate WatchPays Order Creation and Gateway Redirect
-  const initiateWatchPaysPayment = async () => {
+  // Initiate Sunpays Gateway Order Creation and Gateway Redirect
+  const initiateSunpaysPayment = async () => {
     setStage('redirecting');
     setLoading(true);
     setErrorMessage(null);
@@ -84,17 +84,18 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
       const data = await response.json();
 
-      if (data.success && data.paymentUrl) {
-        setPaymentUrl(data.paymentUrl);
-        // Instant direct redirection to WatchPays Payment Gateway
-        window.location.href = data.paymentUrl;
+      if (data.success && (data.paymentUrl || data.checkoutUrl)) {
+        const targetUrl = data.paymentUrl || data.checkoutUrl;
+        setPaymentUrl(targetUrl);
+        // Instant direct redirection to Sunpays Payment Gateway
+        window.location.href = targetUrl;
       } else {
         setErrorMessage(data.error || 'Failed to initialize payment gateway. Please try again.');
         setStage('error');
       }
     } catch (err: any) {
-      console.error('WatchPays payment error:', err);
-      setErrorMessage(err.message || 'Network error connecting to WatchPays Gateway');
+      console.error('Sunpays payment error:', err);
+      setErrorMessage(err.message || 'Network error connecting to Sunpays Gateway');
       setStage('error');
     } finally {
       setLoading(false);
@@ -104,7 +105,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   // Trigger redirection automatically on modal open
   useEffect(() => {
     if (isOpen) {
-      initiateWatchPaysPayment();
+      initiateSunpaysPayment();
     }
   }, [isOpen]);
 

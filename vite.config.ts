@@ -16,71 +16,60 @@ function freeFireApiPlugin(): Plugin {
             try {
               const data = JSON.parse(body || '{}');
               const { amount, playerUid, diamonds } = data;
-              const merchantId = process.env.WATCHPAYS_MERCHANT_ID || '100555238';
-              const apiKey = process.env.WATCHPAYS_API_KEY || '8f0b68cd9c73c0db0131d86da6def792';
-              const formattedAmount = Number(amount || 0).toFixed(2);
+              const merchantId = process.env.SUNPAYS_MERCHANT_ID || '40794632';
+              const apiKey = process.env.SUNPAYS_API_KEY || 'ecee0739b16abec50862a78185b881e3f1772c8bd5dced5b';
+              const apiSecret = process.env.SUNPAYS_API_SECRET || apiKey;
+              const numericAmount = Math.round(Number(amount || 0));
               const merchantOrderNo = `ORD${Date.now()}${Math.floor(100 + Math.random() * 900)}`;
 
               // Callback URL
               const host = req.headers.host || 'localhost:3000';
               const protocol = host.includes('localhost') ? 'http' : 'https';
               const callbackUrl = `${protocol}://${host}/api/payment/callback`;
-              const extraData = playerUid ? `UID_${playerUid}` : `Diamonds_${diamonds || ''}`;
-
-              // MD5 signature per official WatchPays PHP spec:
-              // Only 4 params: merchant_id, amount, merchant_order_no, callback_url
-              // Do NOT include extra or api_key in signature params
-              // Sort alphabetically, build k=v& string, append key=API_KEY, MD5 hash
-              const crypto = await import('crypto');
-              const signParams: Record<string, string> = {
-                amount: formattedAmount,
-                callback_url: callbackUrl,
-                merchant_id: merchantId,
-                merchant_order_no: merchantOrderNo,
-              };
-
-              // Build signature string: sorted keys, k=v&, then key=API_KEY
-              let signStr = '';
-              for (const k of Object.keys(signParams).sort()) {
-                signStr += `${k}=${signParams[k]}&`;
-              }
-              signStr += `key=${apiKey}`;
-              const signature = crypto.createHash('md5').update(signStr).digest('hex');
-
-              console.log('Signature string:', signStr);
-              console.log('Generated signature:', signature);
 
               const requestPayload = {
-                merchant_id: merchantId,
-                api_key: apiKey,
-                amount: formattedAmount,
-                merchant_order_no: merchantOrderNo,
-                callback_url: callbackUrl,
-                extra: extraData,
-                signature: signature,
+                order_id: merchantOrderNo,
+                amount: numericAmount,
+                currency: 'INR',
+                method: 'upi',
+                notify_url: callbackUrl,
+                metadata: {
+                  merchant_id: merchantId,
+                  player_uid: playerUid || '',
+                  diamonds: String(diamonds || '')
+                }
               };
 
-              console.log('Sending WatchPays API request:', JSON.stringify(requestPayload, null, 2));
+              const crypto = await import('crypto');
+              const rawBody = JSON.stringify(requestPayload);
+              const signature = crypto.createHmac('sha256', apiSecret).update(rawBody).digest('hex');
+
+              console.log('Sending Sunpays API request:', rawBody);
+              console.log('Sunpays Signature:', signature);
 
               let resData: any = null;
               let paymentUrl: string | null = null;
 
               try {
-                const resp = await fetch('https://api.watchpays.com/v1/create', {
+                const resp = await fetch('https://sunpaytm.quest/api/public/v1/payins', {
                   method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(requestPayload),
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': apiKey,
+                    'x-signature': signature
+                  },
+                  body: rawBody,
                 });
 
                 const resText = await resp.text();
-                console.log('WatchPays raw response:', resText);
+                console.log('Sunpays raw response:', resText);
                 try { resData = JSON.parse(resText); } catch(e) {}
 
-                if (resData && resData.success && resData.payment_url) {
-                  paymentUrl = resData.payment_url;
+                if (resData && (resData.checkout_url || resData.payment_url || resData.redirect_url)) {
+                  paymentUrl = resData.checkout_url || resData.payment_url || resData.redirect_url;
                 }
               } catch (e: any) {
-                console.error('WatchPays API fetch exception:', e?.message || e);
+                console.error('Sunpays API fetch exception:', e?.message || e);
               }
 
               res.setHeader('Content-Type', 'application/json');
@@ -89,14 +78,15 @@ function freeFireApiPlugin(): Plugin {
                 res.end(JSON.stringify({
                   success: true,
                   paymentUrl: paymentUrl,
-                  merchantOrderNo: resData?.merchant_order_no || merchantOrderNo,
-                  amount: resData?.amount || formattedAmount,
+                  checkoutUrl: paymentUrl,
+                  merchantOrderNo: resData?.order_id || merchantOrderNo,
+                  amount: resData?.amount || numericAmount,
                 }));
               } else {
                 res.statusCode = 200;
                 res.end(JSON.stringify({
                   success: false,
-                  error: resData?.message || 'Payment gateway error. Please try again.',
+                  error: resData?.message || resData?.error || 'Sunpays Payment Gateway error. Please try again.',
                 }));
               }
             } catch (err: any) {
@@ -110,7 +100,6 @@ function freeFireApiPlugin(): Plugin {
 
         if (req.url && req.url.startsWith('/api/verify-uid')) {
           try {
-
             const parsedUrl = new URL(req.url, 'http://localhost');
             const uid = (parsedUrl.searchParams.get('uid') || '').trim();
 
@@ -121,16 +110,14 @@ function freeFireApiPlugin(): Plugin {
               return;
             }
 
-            const apiKey = 'b9172a8c93msh580d2723f591e4bp1b75a7jsnbe815744d293';
-            const rapidApiHost = 'id-game-checker.p.rapidapi.com';
-            const targetUrl = `https://${rapidApiHost}/ff-global/${encodeURIComponent(uid)}`;
+            const apiKey = process.env.NEFERBYTE_API_KEY || '7e7fd9cae78a542bf3ba679f94a5afa2';
+            const targetUrl = `https://api.neferbyte.com/game-id-checker/ff-global/${encodeURIComponent(uid)}`;
 
             const apiResponse = await fetch(targetUrl, {
               method: 'GET',
               headers: {
-                'x-rapidapi-key': apiKey,
-                'x-rapidapi-host': rapidApiHost,
-                'content-type': 'application/json',
+                'x-api-key': apiKey,
+                'Accept': 'application/json',
               },
             });
 
