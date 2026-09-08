@@ -18,9 +18,8 @@ export default async function handler(req, res) {
     const { amount, playerUid, diamonds } = body;
 
     const merchantId = process.env.SUNPAYS_MERCHANT_ID || "40794632";
-    const apiKey = process.env.SUNPAYS_API_KEY || "ecee0739b16abec50862a78185b881e3f1772c8bd5dced5b";
-    const apiSecret = process.env.SUNPAYS_API_SECRET || apiKey;
-    const gatewayApiUrl = "https://sunpaytm.quest/api/public/v1/payins";
+    const apiKey = process.env.SUNPAYS_API_KEY || process.env.PAYIN_API_KEY || "ecee0739b16abec50862a78185b881e3f1772c8bd5dced5b";
+    const apiSecret = process.env.SUNPAYS_API_SECRET || process.env.PAYIN_API_SECRET || "59750f656226f2dbb23518500a3c99a8f3207bdab4f3964c20ac89170628c105";
 
     if (!amount) {
       return res.status(400).json({ success: false, error: "Amount is required" });
@@ -30,14 +29,18 @@ export default async function handler(req, res) {
     const merchantOrderNo = `ORD${Date.now()}${Math.floor(100 + Math.random() * 900)}`;
 
     const host = req.headers.host || "localhost:3000";
-    const protocol = host.includes("localhost") ? "http" : "https";
-    const callbackUrl = `${protocol}://${host}/api/payment/callback`;
+    const isLocalhost = host.includes("localhost") || host.includes("127.0.0.1");
+    const callbackUrl = isLocalhost
+      ? "https://carding-diamonds-topup.vercel.app/api/payment/callback"
+      : `https://${host}/api/payment/callback`;
 
     const requestPayload = {
       order_id: merchantOrderNo,
       amount: numericAmount,
       currency: "INR",
       method: "upi",
+      customer_name: playerUid ? `UID_${playerUid}` : "Customer",
+      customer_phone: "9999999999",
       notify_url: callbackUrl,
       metadata: {
         merchant_id: merchantId,
@@ -49,18 +52,16 @@ export default async function handler(req, res) {
     const rawBody = JSON.stringify(requestPayload);
     const signature = crypto.createHmac("sha256", apiSecret).update(rawBody).digest("hex");
 
-    console.log("Sending Sunpays Pay-in order request to:", gatewayApiUrl);
-    console.log("Payload:", rawBody);
-    console.log("Signature:", signature);
+    console.log("Sending Sunpays Pay-in request to https://sunpaytm.quest/api/public/v1/payins");
 
     let responseData = null;
     let paymentUrl = null;
 
     try {
-      const response = await fetch(gatewayApiUrl, {
+      const response = await fetch("https://sunpaytm.quest/api/public/v1/payins", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "content-type": "application/json",
           "x-api-key": apiKey,
           "x-signature": signature
         },
@@ -73,8 +74,13 @@ export default async function handler(req, res) {
         responseData = JSON.parse(rawText);
       } catch (e) {}
 
-      if (responseData && (responseData.checkout_url || responseData.payment_url || responseData.redirect_url)) {
-        paymentUrl = responseData.checkout_url || responseData.payment_url || responseData.redirect_url;
+      if (responseData) {
+        paymentUrl =
+          responseData.checkout_url ||
+          responseData.payment_url ||
+          responseData.redirect_url ||
+          responseData.merchant_gateway_payment_url ||
+          responseData.transaction?.gateway_payment_url;
       }
     } catch (e) {
       console.error("Sunpays API exception:", e);
@@ -85,8 +91,8 @@ export default async function handler(req, res) {
         success: true,
         paymentUrl: paymentUrl,
         checkoutUrl: paymentUrl,
-        merchantOrderNo: responseData?.order_id || merchantOrderNo,
-        amount: responseData?.amount || numericAmount,
+        merchantOrderNo: responseData?.order_id || responseData?.transaction?.id || merchantOrderNo,
+        amount: responseData?.amount || responseData?.transaction?.amount || numericAmount,
       });
     } else {
       return res.status(200).json({

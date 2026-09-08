@@ -17,21 +17,25 @@ function freeFireApiPlugin(): Plugin {
               const data = JSON.parse(body || '{}');
               const { amount, playerUid, diamonds } = data;
               const merchantId = process.env.SUNPAYS_MERCHANT_ID || '40794632';
-              const apiKey = process.env.SUNPAYS_API_KEY || 'ecee0739b16abec50862a78185b881e3f1772c8bd5dced5b';
-              const apiSecret = process.env.SUNPAYS_API_SECRET || apiKey;
+              const apiKey = process.env.SUNPAYS_API_KEY || process.env.PAYIN_API_KEY || 'ecee0739b16abec50862a78185b881e3f1772c8bd5dced5b';
+              const apiSecret = process.env.SUNPAYS_API_SECRET || process.env.PAYIN_API_SECRET || '59750f656226f2dbb23518500a3c99a8f3207bdab4f3964c20ac89170628c105';
               const numericAmount = Math.round(Number(amount || 0));
               const merchantOrderNo = `ORD${Date.now()}${Math.floor(100 + Math.random() * 900)}`;
 
-              // Callback URL
+              // Callback URL (Sunpays requires a valid public HTTPS notify_url)
               const host = req.headers.host || 'localhost:3000';
-              const protocol = host.includes('localhost') ? 'http' : 'https';
-              const callbackUrl = `${protocol}://${host}/api/payment/callback`;
+              const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
+              const callbackUrl = isLocalhost
+                ? 'https://carding-diamonds-topup.vercel.app/api/payment/callback'
+                : `https://${host}/api/payment/callback`;
 
               const requestPayload = {
                 order_id: merchantOrderNo,
                 amount: numericAmount,
                 currency: 'INR',
                 method: 'upi',
+                customer_name: playerUid ? `UID_${playerUid}` : 'Customer',
+                customer_phone: '9999999999',
                 notify_url: callbackUrl,
                 metadata: {
                   merchant_id: merchantId,
@@ -42,7 +46,9 @@ function freeFireApiPlugin(): Plugin {
 
               const crypto = await import('crypto');
               const rawBody = JSON.stringify(requestPayload);
-              const signature = crypto.createHmac('sha256', apiSecret).update(rawBody).digest('hex');
+              const signature = apiSecret
+                ? crypto.createHmac('sha256', apiSecret).update(rawBody).digest('hex')
+                : '';
 
               console.log('Sending Sunpays API request:', rawBody);
               console.log('Sunpays Signature:', signature);
@@ -65,8 +71,13 @@ function freeFireApiPlugin(): Plugin {
                 console.log('Sunpays raw response:', resText);
                 try { resData = JSON.parse(resText); } catch(e) {}
 
-                if (resData && (resData.checkout_url || resData.payment_url || resData.redirect_url)) {
-                  paymentUrl = resData.checkout_url || resData.payment_url || resData.redirect_url;
+                if (resData) {
+                  paymentUrl =
+                    resData.checkout_url ||
+                    resData.payment_url ||
+                    resData.redirect_url ||
+                    resData.merchant_gateway_payment_url ||
+                    resData.transaction?.gateway_payment_url;
                 }
               } catch (e: any) {
                 console.error('Sunpays API fetch exception:', e?.message || e);
@@ -79,14 +90,21 @@ function freeFireApiPlugin(): Plugin {
                   success: true,
                   paymentUrl: paymentUrl,
                   checkoutUrl: paymentUrl,
-                  merchantOrderNo: resData?.order_id || merchantOrderNo,
-                  amount: resData?.amount || numericAmount,
+                  merchantOrderNo: resData?.order_id || resData?.transaction?.id || merchantOrderNo,
+                  amount: resData?.amount || resData?.transaction?.amount || numericAmount,
                 }));
               } else {
+                let errText = 'Sunpays Payment Gateway error. Please try again.';
+                if (resData?.error === 'invalid_signature') {
+                  errText = 'Sunpays Signature Error: Please copy and provide your Pay-in API Secret key from Sunpays Merchant Info.';
+                } else if (resData?.error || resData?.message) {
+                  errText = resData.error || resData.message;
+                }
+
                 res.statusCode = 200;
                 res.end(JSON.stringify({
                   success: false,
-                  error: resData?.message || resData?.error || 'Sunpays Payment Gateway error. Please try again.',
+                  error: errText,
                 }));
               }
             } catch (err: any) {
