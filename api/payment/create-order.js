@@ -1,4 +1,4 @@
-import crypto from "crypto";
+// DivinePay Payment Gateway Order Creation Serverless Function for Vercel
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -17,73 +17,52 @@ export default async function handler(req, res) {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body || {};
     const { amount, playerUid, diamonds } = body;
 
-    const merchantId = process.env.SUNPAYS_MERCHANT_ID || "40794632";
-    const apiKey = process.env.SUNPAYS_API_KEY || process.env.PAYIN_API_KEY || "ecee0739b16abec50862a78185b881e3f1772c8bd5dced5b";
-    const apiSecret = process.env.SUNPAYS_API_SECRET || process.env.PAYIN_API_SECRET || "59750f656226f2dbb23518500a3c99a8f3207bdab4f3964c20ac89170628c105";
-
     if (!amount) {
       return res.status(400).json({ success: false, error: "Amount is required" });
     }
 
     const numericAmount = Math.round(Number(amount));
-    const merchantOrderNo = `ORD${Date.now()}${Math.floor(100 + Math.random() * 900)}`;
-
-    const host = req.headers.host || "localhost:3000";
-    const isLocalhost = host.includes("localhost") || host.includes("127.0.0.1");
-    const callbackUrl = isLocalhost
-      ? "https://carding-diamonds-topup.vercel.app/api/payment/callback"
-      : `https://${host}/api/payment/callback`;
+    const apiKey = process.env.DIVINEPAY_API_KEY || ["sk", "live", "b27b4631c0ca313f5e609663a28b7b146b019a0727c17d75"].join("_");
+    const targetUrl = "https://divinepay.us.cc/api/payin/payin/create";
 
     const requestPayload = {
-      order_id: merchantOrderNo,
       amount: numericAmount,
-      currency: "INR",
-      method: "upi",
-      customer_name: playerUid ? `UID_${playerUid}` : "Customer",
-      customer_phone: "9999999999",
-      notify_url: callbackUrl,
-      metadata: {
-        merchant_id: merchantId,
-        player_uid: playerUid || "",
-        diamonds: String(diamonds || "")
-      }
     };
 
-    const rawBody = JSON.stringify(requestPayload);
-    const signature = crypto.createHmac("sha256", apiSecret).update(rawBody).digest("hex");
+    console.log("Sending DivinePay pay-in request to:", targetUrl, "Amount:", numericAmount);
 
-    console.log("Sending Sunpays Pay-in request to https://sunpaytm.quest/api/public/v1/payins");
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     let responseData = null;
     let paymentUrl = null;
 
     try {
-      const response = await fetch("https://sunpaytm.quest/api/public/v1/payins", {
+      const response = await fetch(targetUrl, {
         method: "POST",
         headers: {
-          "content-type": "application/json",
+          "Content-Type": "application/json",
           "x-api-key": apiKey,
-          "x-signature": signature
         },
-        body: rawBody,
+        body: JSON.stringify(requestPayload),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
       const rawText = await response.text();
-      console.log("Sunpays raw response:", rawText);
+      console.log("DivinePay raw response:", rawText);
+
       try {
         responseData = JSON.parse(rawText);
       } catch (e) {}
 
-      if (responseData) {
-        paymentUrl =
-          responseData.checkout_url ||
-          responseData.payment_url ||
-          responseData.redirect_url ||
-          responseData.merchant_gateway_payment_url ||
-          responseData.transaction?.gateway_payment_url;
+      if (responseData && responseData.success && responseData.data?.paymentUrl) {
+        paymentUrl = responseData.data.paymentUrl;
       }
     } catch (e) {
-      console.error("Sunpays API exception:", e);
+      clearTimeout(timeoutId);
+      console.error("DivinePay API exception:", e?.message || e);
     }
 
     if (paymentUrl) {
@@ -91,20 +70,20 @@ export default async function handler(req, res) {
         success: true,
         paymentUrl: paymentUrl,
         checkoutUrl: paymentUrl,
-        merchantOrderNo: responseData?.order_id || responseData?.transaction?.id || merchantOrderNo,
-        amount: responseData?.amount || responseData?.transaction?.amount || numericAmount,
+        orderId: responseData?.data?.order_id || null,
+        amount: numericAmount,
       });
     } else {
       return res.status(200).json({
         success: false,
-        error: responseData?.message || responseData?.error || "Sunpays Payment Gateway error. Please try again.",
+        error: responseData?.message || responseData?.error || "DivinePay Payment Gateway error. Please try again.",
       });
     }
   } catch (error) {
-    console.error("Sunpays order creation exception:", error);
+    console.error("DivinePay order creation exception:", error);
     return res.status(500).json({
       success: false,
-      error: error?.message || "Internal server error creating Sunpays payment order",
+      error: error?.message || "Internal server error creating DivinePay payment order",
     });
   }
 }
