@@ -350,7 +350,30 @@ export const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
         {/* Action Button */}
         <div>
           <button
-            onClick={onInitiateCheckout}
+            onClick={async () => {
+              if (!canProceed) return;
+              try {
+                // Call create-order directly
+                const response = await fetch('/api/payment/create-order', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    amount: Math.round(finalLocalPrice),
+                    playerUid: playerUid,
+                    diamonds: totalDiamonds,
+                  }),
+                });
+                const data = await response.json();
+                if (data.success && (data.paymentUrl || data.checkoutUrl)) {
+                  window.location.href = data.paymentUrl || data.checkoutUrl;
+                } else {
+                  alert(data.error || 'Failed to initialize payment gateway. Please try again.');
+                }
+              } catch (err: any) {
+                console.error('Payment gateway error:', err);
+                alert('Network error connecting to payment gateway');
+              }
+            }}
             disabled={!canProceed}
             className={`group w-full py-3.5 px-4 rounded-xl font-display font-extrabold text-lg uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 shadow-lg ${
               canProceed
