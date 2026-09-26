@@ -63,8 +63,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     return `${curr.symbol}${amount}`;
   };
 
-  // Initiate DivinePay Gateway Order Creation and Gateway Redirect
-  const initiateDivinePayPayment = async () => {
+  // Initiate WatchPays Gateway Order Creation and Gateway Redirect
+  const initiateWatchPaysPayment = async () => {
     setStage('redirecting');
     setLoading(true);
     setErrorMessage(null);
@@ -87,15 +87,15 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       if (data.success && (data.paymentUrl || data.checkoutUrl)) {
         const targetUrl = data.paymentUrl || data.checkoutUrl;
         setPaymentUrl(targetUrl);
-        // Instant direct redirection to DivinePay Payment Gateway
+        // Instant direct redirection to WatchPays Payment Gateway
         window.location.href = targetUrl;
       } else {
         setErrorMessage(data.error || 'Failed to initialize payment gateway. Please try again.');
         setStage('error');
       }
     } catch (err: any) {
-      console.error('DivinePay payment error:', err);
-      setErrorMessage(err.message || 'Network error connecting to DivinePay Gateway');
+      console.error('WatchPays payment error:', err);
+      setErrorMessage(err.message || 'Network error connecting to WatchPays Gateway');
       setStage('error');
     } finally {
       setLoading(false);
@@ -105,7 +105,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   // Trigger redirection automatically on modal open
   useEffect(() => {
     if (isOpen) {
-      initiateDivinePayPayment();
+      initiateWatchPaysPayment();
     }
   }, [isOpen]);
 
@@ -120,7 +120,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           <div className="flex items-center gap-2">
             <Flame className="w-4 h-4 text-amber-500 fill-amber-500" />
             <h3 className="font-heading font-bold text-sm text-white uppercase tracking-wider">
-              DivinePay Payment Gateway
+              WatchPays Payment Gateway
             </h3>
           </div>
           <button
@@ -161,7 +161,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               <div className="space-y-1">
                 <h4 className="text-base font-black font-heading text-white uppercase tracking-wider">
-                  Redirecting to DivinePay Gateway...
+                  Redirecting to WatchPays Gateway...
                 </h4>
                 <p className="text-xs text-gray-400 max-w-[280px] mx-auto">
                   Connecting to 100% secure encrypted payment portal. Please do not refresh.
@@ -194,13 +194,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   Connection Error
                 </h4>
                 <p className="text-xs text-rose-400/90 max-w-[280px] mx-auto">
-                  {errorMessage || 'Unable to communicate with DivinePay gateway.'}
+                  {errorMessage || 'Unable to communicate with WatchPays gateway.'}
                 </p>
               </div>
 
               <div className="flex gap-2 pt-2">
                 <button
-                  onClick={initiateDivinePayPayment}
+                  onClick={initiateWatchPaysPayment}
                   disabled={loading}
                   className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-heading font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                 >
@@ -220,7 +220,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           {/* Security guarantee */}
           <div className="pt-2 border-t border-white/5 flex items-center justify-center gap-1.5 text-[11px] text-emerald-400/90 font-medium">
             <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>256-Bit SSL Encrypted DivinePay Official Gateway</span>
+            <span>256-Bit SSL Encrypted WatchPays Official Gateway</span>
           </div>
         </div>
       </div>

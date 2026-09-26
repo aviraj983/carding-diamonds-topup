@@ -16,38 +16,63 @@ function freeFireApiPlugin(): Plugin {
             try {
               const data = JSON.parse(body || '{}');
               const { amount, playerUid, diamonds } = data;
-              const numericAmount = Math.round(Number(amount || 0));
-              const apiKey = process.env.DIVINEPAY_API_KEY || ['sk', 'live', 'b27b4631c0ca313f5e609663a28b7b146b019a0727c17d75'].join('_');
-              const targetUrl = 'https://divinepay.us.cc/api/payin/payin/create';
+              const merchantId = process.env.WATCHPAYS_MERCHANT_ID || '100666060';
+              const apiKey = process.env.WATCHPAYS_API_KEY || 'c76ec04f7b270339aaa05d66c71aed94';
+              const formattedAmount = Number(amount || 0).toFixed(2);
+              const merchantOrderNo = `ORD${Date.now()}${Math.floor(100 + Math.random() * 900)}`;
 
-              const requestPayload = {
-                amount: numericAmount,
+              // Callback URL
+              const host = req.headers.host || 'localhost:3000';
+              const protocol = host.includes('localhost') ? 'http' : 'https';
+              const callbackUrl = `${protocol}://${host}/api/payment/callback`;
+              const extraData = playerUid ? `UID_${playerUid}` : `Diamonds_${diamonds || ''}`;
+
+              const crypto = await import('crypto');
+              const signParams: Record<string, string> = {
+                amount: formattedAmount,
+                callback_url: callbackUrl,
+                merchant_id: merchantId,
+                merchant_order_no: merchantOrderNo,
               };
 
-              console.log('Sending DivinePay API request:', JSON.stringify(requestPayload));
+              let signStr = '';
+              for (const k of Object.keys(signParams).sort()) {
+                signStr += `${k}=${signParams[k]}&`;
+              }
+              signStr += `key=${apiKey}`;
+              const signature = crypto.createHash('md5').update(signStr).digest('hex');
+
+              const requestPayload = {
+                merchant_id: merchantId,
+                api_key: apiKey,
+                amount: formattedAmount,
+                merchant_order_no: merchantOrderNo,
+                callback_url: callbackUrl,
+                extra: extraData,
+                signature: signature,
+              };
+
+              console.log('Sending WatchPays API request:', JSON.stringify(requestPayload, null, 2));
 
               let resData: any = null;
               let paymentUrl: string | null = null;
 
               try {
-                const resp = await fetch(targetUrl, {
+                const resp = await fetch('https://api.watchpays.com/v1/create', {
                   method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': apiKey,
-                  },
+                  headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(requestPayload),
                 });
 
                 const resText = await resp.text();
-                console.log('DivinePay raw response:', resText);
+                console.log('WatchPays raw response:', resText);
                 try { resData = JSON.parse(resText); } catch(e) {}
 
-                if (resData && resData.success && resData.data?.paymentUrl) {
-                  paymentUrl = resData.data.paymentUrl;
+                if (resData && resData.success && resData.payment_url) {
+                  paymentUrl = resData.payment_url;
                 }
               } catch (e: any) {
-                console.error('DivinePay API fetch exception:', e?.message || e);
+                console.error('WatchPays API fetch exception:', e?.message || e);
               }
 
               res.setHeader('Content-Type', 'application/json');
@@ -57,14 +82,14 @@ function freeFireApiPlugin(): Plugin {
                   success: true,
                   paymentUrl: paymentUrl,
                   checkoutUrl: paymentUrl,
-                  orderId: resData?.data?.order_id || null,
-                  amount: numericAmount,
+                  merchantOrderNo: resData?.merchant_order_no || merchantOrderNo,
+                  amount: resData?.amount || formattedAmount,
                 }));
               } else {
                 res.statusCode = 200;
                 res.end(JSON.stringify({
                   success: false,
-                  error: resData?.message || resData?.error || 'DivinePay Payment Gateway error. Please try again.',
+                  error: resData?.message || 'Payment gateway error. Please try again.',
                 }));
               }
             } catch (err: any) {
