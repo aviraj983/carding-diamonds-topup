@@ -57,7 +57,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   }
 
   const finalUSD = Math.max(0, baseUSD - paymentDiscountUSD - promoDiscountUSD);
-  const finalPrice = Math.max(1, Math.round(finalUSD * curr.rate));
+  const finalPrice = product.inrPrice && curr.code === 'INR' ? product.inrPrice : Math.max(1, Math.round(finalUSD * curr.rate));
 
   const formatMoney = (amount: number) => {
     return `${curr.symbol}${amount}`;

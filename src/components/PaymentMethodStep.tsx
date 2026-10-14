@@ -44,15 +44,13 @@ export const PaymentMethodStep: React.FC<PaymentMethodStepProps> = ({
         }`}
         id="payment-method-upi-instant"
       >
-        {/* Discount / Offer Tag */}
-        {upiMethod.discountPercent && (
-          <div className="absolute -top-2.5 right-3">
-            <span className="bg-emerald-500 text-black text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider font-heading flex items-center gap-0.5 shadow">
-              <Percent className="w-2.5 h-2.5 stroke-[3]" />
-              {upiMethod.discountPercent}% OFF • INSTANT
-            </span>
-          </div>
-        )}
+        {/* Instant Tag */}
+        <div className="absolute -top-2.5 right-3">
+          <span className="bg-emerald-500 text-black text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider font-heading flex items-center gap-0.5 shadow">
+            <Zap className="w-2.5 h-2.5 fill-black" />
+            FASTEST • 0% FEE
+          </span>
+        </div>
 
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">

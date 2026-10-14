@@ -19,6 +19,7 @@ import { UidGuideModal } from './components/UidGuideModal';
 import { FaqSection } from './components/FaqSection';
 import { SupportChatWidget } from './components/SupportChatWidget';
 import { RecentTransactions } from './components/RecentTransactions';
+import { LivePurchasePopup } from './components/LivePurchasePopup';
 import { Footer } from './components/Footer';
 
 export default function App() {
@@ -28,9 +29,9 @@ export default function App() {
   const [playerUid, setPlayerUid] = useState('');
   const [playerProfile, setPlayerProfile] = useState<PlayerProfile | null>(null);
 
-  const [selectedProduct, setSelectedProduct] = useState<TopupProduct | null>(TOPUP_PRODUCTS[2]); // 12,000 + 1,500 💎 (₹1,299)
+  const [selectedProduct, setSelectedProduct] = useState<TopupProduct | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(PAYMENT_METHODS[0]); // UPI Instant
-  const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(PROMO_CODES[0]); // BOOYAH50 default
+  const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null);
 
   const [orders, setOrders] = useState<OrderItem[]>([]);
 
@@ -101,16 +102,13 @@ export default function App() {
             onSelectPayment={setSelectedPayment}
           />
 
-          {/* Step 4: Checkout Summary & Promo Box */}
+          {/* Subtotal & Proceed to Payment */}
           <CheckoutSummary
             playerUid={playerUid}
             playerProfile={playerProfile}
             selectedProduct={selectedProduct}
             selectedPayment={selectedPayment}
             currency={currentCurrency}
-            appliedPromo={appliedPromo}
-            onApplyPromo={setAppliedPromo}
-            onInitiateCheckout={() => setIsCheckoutOpen(true)}
           />
 
           {/* FAQ Section */}
@@ -125,6 +123,9 @@ export default function App() {
 
         {/* 24/7 AI Support Chat Widget */}
         <SupportChatWidget />
+
+        {/* Live Diamond Purchases Popup */}
+        <LivePurchasePopup />
       </div>
 
       {/* Modals */}

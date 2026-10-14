@@ -86,7 +86,7 @@ export const TOPUP_PRODUCTS: TopupProduct[] = [
     basePriceUSD: 2499 / 86.5,
     inrPrice: 2499,
     tag: '👑 MEGA VIP',
-    tagColor: 'purple',
+    tagColor: 'amber',
     iconType: 'diamond',
   },
   {
@@ -102,7 +102,7 @@ export const TOPUP_PRODUCTS: TopupProduct[] = [
     iconType: 'diamond',
   },
 
-  // Memberships
+  // Weekly & Monthly Memberships
   {
     id: 'mem-weekly',
     category: 'memberships',
@@ -110,7 +110,7 @@ export const TOPUP_PRODUCTS: TopupProduct[] = [
     diamonds: 450,
     bonusDiamonds: 0,
     basePriceUSD: 1.99,
-    tag: 'INSTANT 100💎 + 50💎/DAY',
+    tag: '100💎 INSTANT + 50💎/DAY',
     tagColor: 'cyan',
     description: 'Get 100 💎 instantly + 50 💎 daily for 7 days (450 💎 total) + Special Weekly Icon badge and discount perks.',
     benefits: ['100 💎 Instant Claim', '50 💎 Daily for 7 Days', 'Weekly VIP Badge in Room', 'Special Store Discount Privilege'],
@@ -182,15 +182,28 @@ export const TOPUP_PRODUCTS: TopupProduct[] = [
     diamonds: 0,
     bonusDiamonds: 0,
     basePriceUSD: 2.89,
-    tag: 'BEST SELLER',
+    tag: 'POPULAR EVO',
     tagColor: 'cyan',
-    description: '100x Blue Flame Draco AK47 Evolution Tokens. Unlock Dragon Wings and Kill Announcement.',
-    benefits: ['100x Draco Upgrade Tokens', 'Unlocks Tier 4 & 5 effects', 'Instant In-Game Delivery'],
+    description: '100x Draco AK Evolution Tokens for dragon wing animation and special emote upgrade.',
+    benefits: ['100x Blue Flame Draco AK Tokens', 'Instant Delivery', 'Original Garena Evolution Token'],
     iconType: 'evo_gun',
     popular: true,
   },
   {
-    id: 'evo-m1014-green',
+    id: 'evo-megalodon-scar',
+    category: 'evo_tokens',
+    title: 'SCAR - Megalodon Alpha (100 Tokens)',
+    diamonds: 0,
+    bonusDiamonds: 0,
+    basePriceUSD: 2.89,
+    tag: 'HOT EVO',
+    tagColor: 'red',
+    description: '100x Shark Alpha SCAR tokens for lethal shark muzzle flash and double damage boost.',
+    benefits: ['100x Megalodon Alpha Tokens', 'Direct Account Delivery', 'Evo Level Boost'],
+    iconType: 'evo_gun',
+  },
+  {
+    id: 'evo-green-draco-shotgun',
     category: 'evo_tokens',
     title: 'M1014 - Green Flame Draco (100 Tokens)',
     diamonds: 0,
@@ -240,7 +253,7 @@ export const PAYMENT_METHODS: PaymentMethod[] = [
     name: 'UPI (GPay / PhonePe / Paytm / QR)',
     category: 'upi',
     icon: '⚡',
-    discountPercent: 5,
+    discountPercent: 0,
     instantBonusText: 'Instant Auto-Credit',
     feeText: '0% Processing Fee',
     popular: true,
@@ -270,22 +283,13 @@ export const PROMO_CODES: PromoCode[] = [
     description: 'Instant 8% discount for community players',
   },
   {
-    code: 'KLA99',
+    code: 'VIPDIAMONDS',
     discountPercent: 20,
-    maxDiscountUSD: 8,
+    maxDiscountUSD: 15,
     bonusDiamonds: 150,
-    description: 'Pro streamer partner code: 20% OFF + 150 💎 bonus',
+    description: 'VIP 20% Discount for top-tier diamond buyers',
   },
 ];
-
-export const SAMPLE_PLAYERS: Record<string, { ign: string; level: number; rank: string; likes: number; guild: string }> = {
-  '123456789': { ign: '꧁༺Sᴋ᭄Sᴀʙɪʀ᭄99༻꧂', level: 78, rank: 'Grandmaster', likes: 29400, guild: '⚡BOSSOFFICIAL⚡' },
-  '987654321': { ign: '🔥RASTAR_YT_99🔥', level: 74, rank: 'Master', likes: 18200, guild: '★DARK_KNIGHTS★' },
-  '555888123': { ign: '★Pᴀᴛʜᴀɴ★_Bᴏʏ', level: 69, rank: 'Heroic', likes: 12450, guild: 'TEAM_ELITE' },
-  '777000111': { ign: '⚡TOTAL_GAMING_FAN⚡', level: 65, rank: 'Diamond', likes: 8900, guild: 'BOOYAH_SQUAD' },
-  '888999111': { ign: '꧁BAD°BOY࿐', level: 71, rank: 'Master', likes: 15600, guild: 'ROYAL_INDIA' },
-  '102030405': { ign: '⚡CRX_MAFIA_007⚡', level: 82, rank: 'Grandmaster', likes: 45200, guild: 'GOD_LIKE' },
-};
 
 export const SPIN_PRIZES: SpinPrize[] = [
   { id: 1, name: '500 Diamonds 💎', type: 'diamonds', value: 500, color: '#f59e0b', textColor: '#000000', probability: 0.05 },
@@ -328,10 +332,15 @@ export const FAQS = [
 export const RECENT_TOPUPS_FEED = [
   { uid: '1284****92', ign: 'Sᴋ_Kɪɴɢ', pack: '2,180 + 218 💎', method: 'UPI', time: '1s ago', country: '🇮🇳' },
   { uid: '4829****11', ign: '꧁Nɪɴᴊᴀ꧂', pack: 'Weekly Membership', method: 'PhonePe', time: '4s ago', country: '🇮🇳' },
-  { uid: '7721****50', ign: '★Vampire★', pack: '5,600 + 560 💎', method: 'Paytm', time: '7s ago', country: '🇮🇳' },
-  { uid: '9103****84', ign: 'Toxic_Pro', pack: '520 + 52 💎', method: 'Google Pay', time: '11s ago', country: '🇮🇳' },
-  { uid: '3049****62', ign: 'Gᴀʀᴇɴᴀ_Kɪʟʟᴇʀ', pack: 'Monthly Membership', method: 'Cards', time: '15s ago', country: '🇧🇷' },
-  { uid: '8841****20', ign: '⚡Dʀᴀᴄᴏ_AK⚡', pack: 'Draco AK47 Tokens', method: 'UPI', time: '19s ago', country: '🇮🇳' },
-  { uid: '6129****05', ign: 'BOOYAH_QUEEN', pack: '1,060 + 106 💎', method: 'Crypto', time: '24s ago', country: '🇸🇬' },
-  { uid: '5928****41', ign: '★Rɪᴄʜ_Bᴏʏ★', pack: 'Level Up Pass (1000 💎)', method: 'UPI', time: '28s ago', country: '🇮🇳' },
+  { uid: '9201****44', ign: '雷_Dʀᴀɢᴏɴ', pack: '12,000 + 1,500 💎', method: 'Paytm', time: '7s ago', country: '🇮🇳' },
+  { uid: '3941****55', ign: '★Vɪᴘᴇʀ★', pack: '6,800 + 680 💎', method: 'GPay', time: '12s ago', country: '🇮🇳' },
+  { uid: '7721****03', ign: '乂BᴀᴅBᴏʏ乂', pack: '78,999 + 15,000 💎', method: 'UPI', time: '15s ago', country: '🇮🇳' },
+  { uid: '5519****88', ign: '么Gᴏᴅғᴀᴛʜᴇʀ', pack: '28,999 + 4,500 💎', method: 'UPI', time: '18s ago', country: '🇮🇳' },
+];
+
+export const SAMPLE_PLAYERS = [
+  { uid: '1284920182', ign: 'Sᴋ_Kɪɴɢ', level: 72, rank: 'Grandmaster', avatarUrl: '/player-avatar.svg', region: 'India' },
+  { uid: '4829110293', ign: '꧁Nɪɴᴊᴀ꧂', level: 68, rank: 'Heroic ★5', avatarUrl: '/player-avatar.svg', region: 'India' },
+  { uid: '9201449182', ign: '雷_Dʀᴀɢᴏɴ', level: 64, rank: 'Master', avatarUrl: '/player-avatar.svg', region: 'India' },
+  { uid: '3941559281', ign: '★Vɪᴘᴇʀ★', level: 59, rank: 'Diamond IV', avatarUrl: '/player-avatar.svg', region: 'India' },
 ];
