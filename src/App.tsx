@@ -21,6 +21,7 @@ import { FaqSection } from './components/FaqSection';
 import { SupportChatWidget } from './components/SupportChatWidget';
 import { RecentTransactions } from './components/RecentTransactions';
 import { LivePurchasePopup } from './components/LivePurchasePopup';
+import { AdsterraBanner } from './components/AdsterraBanner';
 import { Footer } from './components/Footer';
 
 export default function App() {
@@ -140,6 +141,9 @@ export default function App() {
 
           {/* Live Recent Transactions */}
           <RecentTransactions />
+
+          {/* Adsterra Banner 728x90 */}
+          <AdsterraBanner />
         </main>
 
         {/* 4. Footer */}

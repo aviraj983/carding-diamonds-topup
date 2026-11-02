@@ -89,14 +89,14 @@ export const PaymentMethodStep: React.FC<PaymentMethodStepProps> = ({
               <div>
                 <div className="flex items-center gap-2">
                   <h4 className="font-heading font-bold text-sm text-white leading-tight">
-                    bKash / QR Code
+                    bKash - Pay Via Bkash
                   </h4>
                   <span className="px-1.5 py-0.2 rounded bg-[#E2136E]/20 border border-[#E2136E]/40 text-[#ff4081] font-mono text-[9px] font-bold">
                     BANGLADESH
                   </span>
                 </div>
                 <p className="text-[11px] text-gray-400 mt-0.5">
-                  bKash App • USSD *247# • Merchant & Personal QR
+                  Pay Using BKASH App
                 </p>
               </div>
             </div>
