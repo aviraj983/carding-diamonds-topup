@@ -4,10 +4,11 @@
  */
 
 import React, { useState } from 'react';
-import { CurrencyCode, OrderItem, PaymentMethod, PlayerProfile, PromoCode, TopupProduct } from './types';
-import { TOPUP_PRODUCTS, PAYMENT_METHODS, PROMO_CODES } from './data/mockData';
+import { CountryCode, CurrencyCode, OrderItem, PaymentMethod, PlayerProfile, PromoCode, TopupProduct } from './types';
+import { TOPUP_PRODUCTS, PAYMENT_METHODS_IN, PAYMENT_METHODS_BD } from './data/mockData';
 import { Header } from './components/Header';
 import { HeroBanner } from './components/HeroBanner';
+import { CountrySelectorStep } from './components/CountrySelectorStep';
 import { PlayerIdStep } from './components/PlayerIdStep';
 import { DiamondSelector } from './components/DiamondSelector';
 import { PaymentMethodStep } from './components/PaymentMethodStep';
@@ -24,14 +25,26 @@ import { Footer } from './components/Footer';
 
 export default function App() {
   // State
+  const [selectedCountry, setSelectedCountry] = useState<CountryCode>('IN');
   const [currentCurrency, setCurrentCurrency] = useState<CurrencyCode>('INR');
   
   const [playerUid, setPlayerUid] = useState('');
   const [playerProfile, setPlayerProfile] = useState<PlayerProfile | null>(null);
 
   const [selectedProduct, setSelectedProduct] = useState<TopupProduct | null>(null);
-  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(PAYMENT_METHODS[0]); // UPI Instant
+  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(PAYMENT_METHODS_IN[0]); // Default UPI for India
   const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null);
+
+  const handleCountryChange = (country: CountryCode) => {
+    setSelectedCountry(country);
+    if (country === 'BD') {
+      setCurrentCurrency('BDT');
+      setSelectedPayment(PAYMENT_METHODS_BD[0]);
+    } else {
+      setCurrentCurrency('INR');
+      setSelectedPayment(PAYMENT_METHODS_IN[0]);
+    }
+  };
 
   const [orders, setOrders] = useState<OrderItem[]>([]);
 
@@ -80,26 +93,36 @@ export default function App() {
 
         {/* 3. Main Top-Up Workflow Layout */}
         <main className="flex-1 px-3.5 sm:px-4 py-5 space-y-5 w-full">
-          {/* Step 1: Player ID */}
+          {/* Step 1: Country Selection */}
+          <CountrySelectorStep
+            selectedCountry={selectedCountry}
+            onSelectCountry={handleCountryChange}
+          />
+
+          {/* Step 2: Player ID */}
           <PlayerIdStep
             playerUid={playerUid}
             onUidChange={setPlayerUid}
             playerProfile={playerProfile}
             onProfileVerified={setPlayerProfile}
             onOpenUidGuide={() => setIsUidGuideOpen(true)}
+            stepNumber={2}
           />
 
-          {/* Step 2: Diamond Pack Selector & Memberships */}
+          {/* Step 3: Diamond Pack Selector */}
           <DiamondSelector
             selectedProduct={selectedProduct}
             onSelectProduct={setSelectedProduct}
             currency={currentCurrency}
+            stepNumber={3}
           />
 
-          {/* Step 3: Payment Gateway Selector */}
+          {/* Step 4: Payment Gateway Selector */}
           <PaymentMethodStep
             selectedPayment={selectedPayment}
             onSelectPayment={setSelectedPayment}
+            country={selectedCountry}
+            stepNumber={4}
           />
 
           {/* Subtotal & Proceed to Payment */}
@@ -109,6 +132,7 @@ export default function App() {
             selectedProduct={selectedProduct}
             selectedPayment={selectedPayment}
             currency={currentCurrency}
+            country={selectedCountry}
           />
 
           {/* FAQ Section */}

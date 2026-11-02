@@ -57,7 +57,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   }
 
   const finalUSD = Math.max(0, baseUSD - paymentDiscountUSD - promoDiscountUSD);
-  const finalPrice = product.inrPrice && curr.code === 'INR' ? product.inrPrice : Math.max(1, Math.round(finalUSD * curr.rate));
+  const finalPrice =
+    curr.code === 'INR' && product.inrPrice
+      ? product.inrPrice
+      : curr.code === 'BDT' && product.bdtPrice
+      ? product.bdtPrice
+      : Math.max(1, Math.round(finalUSD * curr.rate));
 
   const formatMoney = (amount: number) => {
     return `${curr.symbol}${amount}`;
@@ -70,6 +75,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setErrorMessage(null);
 
     try {
+      const resolvedCountry = curr.code === 'BDT' ? 'BD' : 'IN';
       const response = await fetch('/api/payment/create-order', {
         method: 'POST',
         headers: {
@@ -79,6 +85,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           amount: finalPrice,
           playerUid: playerUid,
           diamonds: totalDiamonds,
+          currency: curr.code,
+          country: resolvedCountry,
+          paymentMethod: paymentMethod.id,
         }),
       });
 

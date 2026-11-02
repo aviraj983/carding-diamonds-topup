@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CurrencyCode, PaymentMethod, PlayerProfile, TopupProduct } from '../types';
+import { CountryCode, CurrencyCode, PaymentMethod, PlayerProfile, TopupProduct } from '../types';
 import { CURRENCIES } from '../data/mockData';
 import { ArrowRight, ShieldCheck, Zap, AlertCircle, Loader2 } from 'lucide-react';
 
@@ -9,6 +9,7 @@ interface CheckoutSummaryProps {
   selectedProduct: TopupProduct | null;
   selectedPayment: PaymentMethod | null;
   currency: CurrencyCode;
+  country?: CountryCode;
   onInitiateCheckout?: () => void;
 }
 
@@ -18,6 +19,7 @@ export const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
   selectedProduct,
   selectedPayment,
   currency,
+  country,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -26,8 +28,10 @@ export const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
 
   // Calculate Subtotal (price of selected product)
   const subtotal = selectedProduct
-    ? (selectedProduct.inrPrice && curr.code === 'INR'
+    ? (curr.code === 'INR' && selectedProduct.inrPrice
         ? selectedProduct.inrPrice
+        : curr.code === 'BDT' && selectedProduct.bdtPrice
+        ? selectedProduct.bdtPrice
         : Math.round(selectedProduct.basePriceUSD * curr.rate))
     : 0;
 
@@ -52,6 +56,7 @@ export const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
     setErrorMessage(null);
 
     try {
+      const resolvedCountry = country || (curr.code === 'BDT' ? 'BD' : 'IN');
       const response = await fetch('/api/payment/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -59,6 +64,9 @@ export const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
           amount: Math.round(subtotal),
           playerUid: playerUid,
           diamonds: totalDiamonds,
+          currency: curr.code,
+          country: resolvedCountry,
+          paymentMethod: selectedPayment?.id || (resolvedCountry === 'BD' ? 'bkash' : 'upi'),
         }),
       });
 
@@ -88,7 +96,7 @@ export const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
             {selectedProduct ? formatMoney(subtotal) : '—'}
           </span>
           <span className={`text-[11px] font-medium block mt-0.5 ${selectedProduct ? 'text-amber-400/90' : 'text-gray-400'}`}>
-            {selectedProduct ? selectedProduct.title : 'Select a pack in Step 2'}
+            {selectedProduct ? selectedProduct.title : 'Select a pack in Step 3'}
           </span>
         </div>
 
@@ -141,12 +149,12 @@ export const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
             <AlertCircle className="w-3.5 h-3.5 shrink-0" />
             <span>
               {!playerUid
-                ? 'Enter your Player ID in Step 1 to continue'
+                ? 'Enter your Player ID in Step 2 to continue'
                 : !playerProfile?.verified
-                ? 'Verify your Player UID in Step 1'
+                ? 'Verify your Player UID in Step 2'
                 : !selectedProduct
-                ? 'Select a Diamond Pack in Step 2'
-                : 'Choose a Payment Method in Step 3'}
+                ? 'Select a Diamond Pack in Step 3'
+                : 'Choose a Payment Method in Step 4'}
             </span>
           </p>
         )}
