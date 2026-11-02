@@ -11,6 +11,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
+  currentCurrency = 'INR',
   onOpenOrderTracker,
   onOpenUidGuide,
 }) => {
@@ -109,14 +110,15 @@ export const Header: React.FC<HeaderProps> = ({
               <Search className="w-3.5 h-3.5 text-amber-500" />
             </button>
 
-            {/* INR Currency Fixed Badge */}
+            {/* Dynamic Currency Badge */}
             <div
               className="bg-[#16181D] border border-amber-500/30 text-amber-400 text-[11px] font-bold py-1.5 px-2.5 rounded-lg flex items-center gap-1 font-mono shadow-inner select-none"
-              title="Currency: Indian Rupee (INR)"
-              id="currency-badge-inr"
+              title={`Currency: ${currentCurrency === 'BDT' ? 'Bangladeshi Taka (BDT)' : 'Indian Rupee (INR)'}`}
+              id="currency-badge-header"
             >
-              <span className="text-white font-extrabold">₹</span>
-              <span>INR</span>
+              <span className="text-xs">{currentCurrency === 'BDT' ? '🇧🇩' : '🇮🇳'}</span>
+              <span className="text-white font-extrabold">{currentCurrency === 'BDT' ? '৳' : '₹'}</span>
+              <span>{currentCurrency}</span>
             </div>
 
             {/* Help / UID Guide */}

@@ -7,17 +7,25 @@ interface DiamondSelectorProps {
   selectedProduct: TopupProduct | null;
   onSelectProduct: (product: TopupProduct) => void;
   currency: CurrencyCode;
+  stepNumber?: number;
 }
 
 export const DiamondSelector: React.FC<DiamondSelectorProps> = ({
   selectedProduct,
   onSelectProduct,
   currency,
+  stepNumber = 3,
 }) => {
   const curr = CURRENCIES[currency] || CURRENCIES.INR;
 
-  const formatPrice = (baseUSD: number) => {
-    const raw = baseUSD * curr.rate;
+  const formatPrice = (product: TopupProduct) => {
+    if (curr.code === 'INR' && product.inrPrice) {
+      return `${curr.symbol}${product.inrPrice}`;
+    }
+    if (curr.code === 'BDT' && product.bdtPrice) {
+      return `${curr.symbol}${product.bdtPrice}`;
+    }
+    const raw = product.basePriceUSD * curr.rate;
     if (curr.code === 'IDR') {
       return `${curr.symbol} ${Math.round(raw / 1000) * 1000}`;
     }
@@ -36,7 +44,7 @@ export const DiamondSelector: React.FC<DiamondSelectorProps> = ({
       <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-3">
         <div className="flex items-center gap-2.5">
           <span className="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-black font-black text-xs flex items-center justify-center shadow-md shadow-amber-500/25 border border-amber-300/40 shrink-0 font-heading">
-            2
+            {stepNumber}
           </span>
           <h2 className="text-base font-black font-heading text-white tracking-wider uppercase">
             Choose Diamond Pack
@@ -125,7 +133,7 @@ export const DiamondSelector: React.FC<DiamondSelectorProps> = ({
               <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between">
                 <div>
                   <span className="font-mono text-sm font-black text-white">
-                    {formatPrice(product.basePriceUSD)}
+                    {formatPrice(product)}
                   </span>
                 </div>
 
