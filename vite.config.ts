@@ -8,6 +8,19 @@ function freeFireApiPlugin(): Plugin {
     name: 'free-fire-api',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
+        // Payment callback / webhook route
+        if (req.url && req.url.startsWith('/api/payment/callback') && req.method === 'POST') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', async () => {
+            console.log('Payment webhook received:', body);
+            res.setHeader('Content-Type', 'application/json');
+            res.statusCode = 200;
+            res.end(JSON.stringify({ success: true, status: 'OK' }));
+          });
+          return;
+        }
+
         // Payment create-order API route
         if (req.url && req.url.startsWith('/api/payment/create-order') && req.method === 'POST') {
           let body = '';
@@ -15,19 +28,101 @@ function freeFireApiPlugin(): Plugin {
           req.on('end', async () => {
             try {
               const data = JSON.parse(body || '{}');
-              const { amount, playerUid, diamonds } = data;
+              const { amount, playerUid, diamonds, country, currency, paymentMethod } = data;
+              const crypto = await import('crypto');
+
+              const isBangladesh = country === 'BD' || currency === 'BDT' || paymentMethod === 'bkash' || paymentMethod === 'nagad';
+
+              const host = req.headers.host || 'localhost:3000';
+              const isHttps = !host.includes('localhost') && (req.headers['x-forwarded-proto'] === 'https' || (req.socket as any)?.encrypted);
+              const appBaseUrl = isHttps ? `https://${host}` : (process.env.APP_URL || 'https://carding-diamonds-topup.vercel.app');
+              const callbackUrl = `${appBaseUrl}/api/payment/callback`;
+
+              // ============================================
+              // Bangladesh Gateway: DivinePay (bKash / Nagad)
+              // ============================================
+              if (isBangladesh) {
+                const bdMerchantId = process.env.DIVINEPAY_MERCHANT_ID || 'bd_e51bd686f430172b';
+                const bdApiSecret = process.env.DIVINEPAY_API_SECRET || 'f45349c5d0003822dbe9cedf833a3a771585dc932f5978076f0b33db69f59ca1';
+                const formattedAmount = Number(amount || 0).toFixed(2);
+                const orderId = `FFBD_${Date.now()}_${Math.floor(100 + Math.random() * 900)}`;
+                const returnUrl = `${appBaseUrl}/?status=success&orderId=${orderId}`;
+
+                const divinePayBody: Record<string, string> = {
+                  merchantId: bdMerchantId,
+                  orderId: orderId,
+                  amount: formattedAmount,
+                  method: paymentMethod === 'nagad' ? 'nagad' : 'bkash',
+                  timestamp: String(Date.now()),
+                  notifyUrl: callbackUrl,
+                  returnUrl: returnUrl,
+                };
+
+                if (playerUid) {
+                  divinePayBody.customerName = `FF_${playerUid}`;
+                }
+
+                // Compute HMAC-SHA256 signature
+                const signStr = Object.keys(divinePayBody)
+                  .filter((k) => k !== 'sign' && divinePayBody[k] !== '' && divinePayBody[k] !== null && divinePayBody[k] !== undefined)
+                  .sort()
+                  .map((k) => `${k}=${divinePayBody[k]}`)
+                  .join('&');
+                divinePayBody.sign = crypto.createHmac('sha256', bdApiSecret).update(signStr, 'utf8').digest('hex');
+
+                console.log('Sending DivinePay BD API request:', JSON.stringify(divinePayBody, null, 2));
+
+                let resData: any = null;
+                let paymentUrl: string | null = null;
+
+                try {
+                  const resp = await fetch('https://bd.divinepay.top/api/v1/payin/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(divinePayBody),
+                  });
+
+                  const resText = await resp.text();
+                  console.log('DivinePay BD raw response:', resText);
+                  try { resData = JSON.parse(resText); } catch(e) {}
+
+                  if (resData && (resData.code === 200 || resData.status === 'success') && resData.data?.payUrl) {
+                    paymentUrl = resData.data.payUrl;
+                  }
+                } catch (e: any) {
+                  console.error('DivinePay API fetch exception:', e?.message || e);
+                }
+
+                res.setHeader('Content-Type', 'application/json');
+                if (paymentUrl) {
+                  res.statusCode = 200;
+                  res.end(JSON.stringify({
+                    success: true,
+                    paymentUrl: paymentUrl,
+                    checkoutUrl: paymentUrl,
+                    orderId: resData?.data?.orderId || orderId,
+                    orderNo: resData?.data?.orderNo,
+                    amount: resData?.data?.amount || formattedAmount,
+                  }));
+                } else {
+                  res.statusCode = 200;
+                  res.end(JSON.stringify({
+                    success: false,
+                    error: resData?.msg || resData?.message || 'DivinePay payment gateway error. Please try again.',
+                  }));
+                }
+                return;
+              }
+
+              // ============================================
+              // India Gateway: WatchPays (UPI)
+              // ============================================
               const merchantId = process.env.WATCHPAYS_MERCHANT_ID || '100666060';
               const apiKey = process.env.WATCHPAYS_API_KEY || 'c76ec04f7b270339aaa05d66c71aed94';
               const formattedAmount = Number(amount || 0).toFixed(2);
               const merchantOrderNo = `ORD${Date.now()}${Math.floor(100 + Math.random() * 900)}`;
-
-              // Callback URL
-              const host = req.headers.host || 'localhost:3000';
-              const protocol = host.includes('localhost') ? 'http' : 'https';
-              const callbackUrl = `${protocol}://${host}/api/payment/callback`;
               const extraData = playerUid ? `UID_${playerUid}` : `Diamonds_${diamonds || ''}`;
 
-              const crypto = await import('crypto');
               const signParams: Record<string, string> = {
                 amount: formattedAmount,
                 callback_url: callbackUrl,

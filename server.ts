@@ -35,6 +35,19 @@ function generateWatchPaysSignature(
   return crypto.createHash("md5").update(signStr).digest("hex");
 }
 
+// Helper to generate DivinePay HMAC-SHA256 signature
+function generateDivinePaySignature(
+  params: Record<string, any>,
+  secret: string
+): string {
+  const str = Object.keys(params)
+    .filter((k) => k !== "sign" && params[k] !== "" && params[k] !== null && params[k] !== undefined)
+    .sort()
+    .map((k) => `${k}=${params[k]}`)
+    .join("&");
+  return crypto.createHmac("sha256", secret).update(str, "utf8").digest("hex");
+}
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -90,32 +103,107 @@ async function startServer() {
     }
   });
 
-  // WatchPays Create Order Endpoint
+  // Payment Create Order Endpoint (Dual Gateway: DivinePay for BD / WatchPays for IN)
   app.post("/api/payment/create-order", async (req, res) => {
     try {
-      const { amount, playerUid, diamonds } = req.body;
-
-      const merchantId = process.env.WATCHPAYS_MERCHANT_ID || "100555238";
-      const apiKey = process.env.WATCHPAYS_API_KEY || "8f0b68cd9c73c0db0131d86da6def792";
-      const gatewayApiUrl = "https://api.watchpays.com/v1/create";
+      const { amount, playerUid, diamonds, country, currency, paymentMethod } = req.body;
 
       if (!amount) {
         return res.status(400).json({ success: false, error: "Amount is required" });
       }
 
+      const host = req.get("host") || "localhost:3000";
+      const isHttps = !host.includes("localhost") && (req.protocol === "https" || req.headers["x-forwarded-proto"] === "https");
+      const appBaseUrl = isHttps ? `https://${host}` : (process.env.APP_URL || "https://carding-diamonds-topup.vercel.app");
+      const callbackUrl = `${appBaseUrl}/api/payment/callback`;
+
+      const isBangladesh = country === "BD" || currency === "BDT" || paymentMethod === "bkash" || paymentMethod === "nagad";
+
+      // ============================================
+      // Bangladesh Gateway: DivinePay (bKash / Nagad)
+      // ============================================
+      if (isBangladesh) {
+        const bdMerchantId = process.env.DIVINEPAY_MERCHANT_ID || "bd_e51bd686f430172b";
+        const bdApiSecret = process.env.DIVINEPAY_API_SECRET || "f45349c5d0003822dbe9cedf833a3a771585dc932f5978076f0b33db69f59ca1";
+        const formattedAmount = Number(amount).toFixed(2);
+        const orderId = `FFBD_${Date.now()}_${Math.floor(100 + Math.random() * 900)}`;
+        const returnUrl = `${appBaseUrl}/?status=success&orderId=${orderId}`;
+
+        const divinePayBody: Record<string, string> = {
+          merchantId: bdMerchantId,
+          orderId: orderId,
+          amount: formattedAmount,
+          method: paymentMethod === "nagad" ? "nagad" : "bkash",
+          timestamp: String(Date.now()),
+          notifyUrl: callbackUrl,
+          returnUrl: returnUrl,
+        };
+
+        if (playerUid) {
+          divinePayBody.customerName = `FF_${playerUid}`;
+        }
+
+        divinePayBody.sign = generateDivinePaySignature(divinePayBody, bdApiSecret);
+
+        console.log("Sending DivinePay BD payin request:", JSON.stringify(divinePayBody, null, 2));
+
+        let responseData: any = null;
+        let paymentUrl: string | null = null;
+
+        try {
+          const response = await fetch("https://bd.divinepay.top/api/v1/payin/create", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify(divinePayBody),
+          });
+
+          const rawText = await response.text();
+          console.log("DivinePay BD raw response:", rawText);
+          try {
+            responseData = JSON.parse(rawText);
+          } catch (e) {}
+
+          if (responseData && (responseData.code === 200 || responseData.status === "success") && responseData.data?.payUrl) {
+            paymentUrl = responseData.data.payUrl;
+          }
+        } catch (e: any) {
+          console.error("DivinePay API exception:", e);
+        }
+
+        if (paymentUrl) {
+          return res.json({
+            success: true,
+            paymentUrl: paymentUrl,
+            checkoutUrl: paymentUrl,
+            orderId: responseData?.data?.orderId || orderId,
+            orderNo: responseData?.data?.orderNo,
+            amount: responseData?.data?.amount || formattedAmount,
+          });
+        } else {
+          return res.status(400).json({
+            success: false,
+            error: responseData?.msg || responseData?.message || "DivinePay payment creation failed",
+          });
+        }
+      }
+
+      // ============================================
+      // India Gateway: WatchPays (UPI)
+      // ============================================
+      const merchantId = process.env.WATCHPAYS_MERCHANT_ID || "100555238";
+      const apiKey = process.env.WATCHPAYS_API_KEY || "8f0b68cd9c73c0db0131d86da6def792";
+      const gatewayApiUrl = "https://api.watchpays.com/v1/create";
+
       // Format amount strictly with 2 decimals as required
       const formattedAmount = Number(amount).toFixed(2);
       const merchantOrderNo = `ORD${Date.now()}${Math.floor(100 + Math.random() * 900)}`;
 
-      // Construct host callback URL
-      const host = req.get("host") || "ais-dev-274tg4ympafflhmne7icjw-794323121532.asia-east1.run.app";
-      const protocol = req.protocol === "http" && !host.includes("localhost") ? "https" : req.protocol;
-      const callbackUrl = `${protocol}://${host}/api/payment/callback`;
-
       const extraData = playerUid ? `UID_${playerUid}` : `Diamonds_${diamonds || ""}`;
 
       // Only 4 params in signature per WatchPays PHP spec
-      // Do NOT include extra or api_key
       const signParams: Record<string, string> = {
         amount: formattedAmount,
         callback_url: callbackUrl,
@@ -191,7 +279,7 @@ async function startServer() {
         paymentUrl: responseData?.payment_url || null,
       });
     } catch (error: any) {
-      console.error("WatchPays order creation exception:", error);
+      console.error("Payment order creation exception:", error);
       return res.status(500).json({
         success: false,
         error: error?.message || "Internal server error creating payment order",
