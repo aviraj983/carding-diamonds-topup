@@ -10,6 +10,7 @@ interface PlayerIdStepProps {
   playerProfile: PlayerProfile | null;
   onProfileVerified: (profile: PlayerProfile | null) => void;
   onOpenUidGuide: () => void;
+  stepNumber?: number;
 }
 
 export const PlayerIdStep: React.FC<PlayerIdStepProps> = ({
@@ -18,6 +19,7 @@ export const PlayerIdStep: React.FC<PlayerIdStepProps> = ({
   playerProfile,
   onProfileVerified,
   onOpenUidGuide,
+  stepNumber = 2,
 }) => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -99,7 +101,7 @@ export const PlayerIdStep: React.FC<PlayerIdStepProps> = ({
       <div className="flex items-center justify-between gap-2 mb-3.5 border-b border-white/5 pb-3">
         <div className="flex items-center gap-2.5">
           <span className="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-black font-black text-xs flex items-center justify-center shadow-md shadow-amber-500/25 border border-amber-300/40 shrink-0 font-heading">
-            1
+            {stepNumber}
           </span>
           <h2 className="text-base font-black font-heading text-white tracking-wider uppercase">
             Enter Player ID (UID)

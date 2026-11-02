@@ -1,5 +1,7 @@
 export type CurrencyCode = 'INR' | 'USD' | 'BDT' | 'IDR' | 'BRL' | 'PKR' | 'EUR' | 'MYR' | 'PHP';
 
+export type CountryCode = 'IN' | 'BD';
+
 export interface Currency {
   code: CurrencyCode;
   name: string;
@@ -27,6 +29,7 @@ export interface TopupProduct {
   bonusDiamonds: number;
   basePriceUSD: number;
   inrPrice?: number;
+  bdtPrice?: number;
   tag?: string;
   tagColor?: 'amber' | 'cyan' | 'red' | 'emerald' | 'purple';
   description?: string;
