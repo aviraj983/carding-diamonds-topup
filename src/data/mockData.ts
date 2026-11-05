@@ -256,14 +256,32 @@ export const PAYMENT_METHODS_IN: PaymentMethod[] = [
 
 export const PAYMENT_METHODS_BD: PaymentMethod[] = [
   {
-    id: 'bkash-instant',
-    name: 'bKash (App / QR / Personal / Merchant)',
+    id: 'bkash',
+    name: 'bKash - Pay Via Bkash',
     category: 'wallet',
     icon: '⚡',
     discountPercent: 0,
     instantBonusText: 'Instant Auto-Credit',
     feeText: '0% Processing Fee',
     popular: true,
+  },
+  {
+    id: 'nagad',
+    name: 'Nagad - Pay Via Nagad',
+    category: 'wallet',
+    icon: '⚡',
+    discountPercent: 0,
+    instantBonusText: 'Instant Auto-Credit',
+    feeText: '0% Processing Fee',
+  },
+  {
+    id: 'bank',
+    name: 'Online Banking',
+    category: 'netbanking',
+    icon: '🏦',
+    discountPercent: 0,
+    instantBonusText: 'All BD Banks Supported',
+    feeText: '0% Processing Fee',
   },
 ];
 
@@ -306,7 +324,7 @@ export const PROMO_CODES: PromoCode[] = [
 export const SAMPLE_PLAYERS: Record<string, { ign: string; level: number; rank: string; likes: number; guild: string }> = {
   '123456789': { ign: '꧁༺Sᴋ᭄Sᴀʙɪʀ᭄99༻꧂', level: 78, rank: 'Grandmaster', likes: 29400, guild: '⚡BOSSOFFICIAL⚡' },
   '987654321': { ign: '🔥RASTAR_YT_99🔥', level: 74, rank: 'Master', likes: 18200, guild: '★DARK_KNIGHTS★' },
-  '555888123': { ign: '★Pᴀᴛʜᴀɴ★_BᴏYBᴏY', level: 69, rank: 'Heroic', likes: 12450, guild: 'TEAM_ELITE' },
+  '555888123': { ign: '★Pᴀᴛʜᴀɴ★_Bᴏʏ', level: 69, rank: 'Heroic', likes: 12450, guild: 'TEAM_ELITE' },
   '777000111': { ign: '⚡TOTAL_GAMING_FAN⚡', level: 65, rank: 'Diamond', likes: 8900, guild: 'BOOYAH_SQUAD' },
   '888999111': { ign: '꧁BAD°BOY࿐', level: 71, rank: 'Master', likes: 15600, guild: 'ROYAL_INDIA' },
   '102030405': { ign: '⚡CRX_MAFIA_007⚡', level: 82, rank: 'Grandmaster', likes: 45200, guild: 'GOD_LIKE' },

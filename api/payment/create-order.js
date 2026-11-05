@@ -53,10 +53,10 @@ export default async function handler(req, res) {
     const appBaseUrl = isHttps ? `https://${host}` : (process.env.APP_URL || "https://carding-diamonds-topup.vercel.app");
     const callbackUrl = `${appBaseUrl}/api/payment/callback`;
 
-    const isBangladesh = country === "BD" || currency === "BDT" || paymentMethod === "bkash" || paymentMethod === "nagad";
+    const isBangladesh = country === "BD" || currency === "BDT" || paymentMethod === "bkash" || paymentMethod === "nagad" || paymentMethod === "bank";
 
     // ============================================
-    // Bangladesh Gateway: DivinePay (bKash / Nagad)
+    // Bangladesh Gateway: DivinePay (bKash / Nagad / Bank)
     // ============================================
     if (isBangladesh) {
       const bdMerchantId = process.env.DIVINEPAY_MERCHANT_ID || "bd_e51bd686f430172b";
@@ -69,7 +69,7 @@ export default async function handler(req, res) {
         merchantId: bdMerchantId,
         orderId: orderId,
         amount: formattedAmount,
-        method: paymentMethod === "nagad" ? "nagad" : "bkash",
+        method: paymentMethod === "nagad" ? "nagad" : paymentMethod === "bank" ? "bank" : "bkash",
         timestamp: String(Date.now()),
         notifyUrl: callbackUrl,
         returnUrl: returnUrl,

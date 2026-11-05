@@ -31,7 +31,7 @@ function freeFireApiPlugin(): Plugin {
               const { amount, playerUid, diamonds, country, currency, paymentMethod } = data;
               const crypto = await import('crypto');
 
-              const isBangladesh = country === 'BD' || currency === 'BDT' || paymentMethod === 'bkash' || paymentMethod === 'nagad';
+              const isBangladesh = country === 'BD' || currency === 'BDT' || paymentMethod === 'bkash' || paymentMethod === 'nagad' || paymentMethod === 'bank';
 
               const host = req.headers.host || 'localhost:3000';
               const isHttps = !host.includes('localhost') && (req.headers['x-forwarded-proto'] === 'https' || (req.socket as any)?.encrypted);
@@ -39,7 +39,7 @@ function freeFireApiPlugin(): Plugin {
               const callbackUrl = `${appBaseUrl}/api/payment/callback`;
 
               // ============================================
-              // Bangladesh Gateway: DivinePay (bKash / Nagad)
+              // Bangladesh Gateway: DivinePay (bKash / Nagad / Bank)
               // ============================================
               if (isBangladesh) {
                 const bdMerchantId = process.env.DIVINEPAY_MERCHANT_ID || 'bd_e51bd686f430172b';
@@ -52,7 +52,7 @@ function freeFireApiPlugin(): Plugin {
                   merchantId: bdMerchantId,
                   orderId: orderId,
                   amount: formattedAmount,
-                  method: paymentMethod === 'nagad' ? 'nagad' : 'bkash',
+                  method: paymentMethod === 'nagad' ? 'nagad' : paymentMethod === 'bank' ? 'bank' : 'bkash',
                   timestamp: String(Date.now()),
                   notifyUrl: callbackUrl,
                   returnUrl: returnUrl,
