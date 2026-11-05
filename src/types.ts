@@ -30,6 +30,7 @@ export interface TopupProduct {
   basePriceUSD: number;
   inrPrice?: number;
   bdtPrice?: number;
+  soldOutInBD?: boolean;
   tag?: string;
   tagColor?: 'amber' | 'cyan' | 'red' | 'emerald' | 'purple';
   description?: string;

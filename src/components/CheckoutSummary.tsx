@@ -47,7 +47,8 @@ export const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
     return `${curr.symbol}${Math.round(amount)}`;
   };
 
-  const canProceed = Boolean(playerUid && playerProfile?.verified && selectedProduct && selectedPayment);
+  const isSoldOut = curr.code === 'BDT' && Boolean(selectedProduct?.soldOutInBD || selectedProduct?.bdtPrice === 490);
+  const canProceed = Boolean(playerUid && playerProfile?.verified && selectedProduct && !isSoldOut && selectedPayment);
 
   const handleProceedToPayment = async () => {
     if (!canProceed || isSubmitting) return;
@@ -152,8 +153,10 @@ export const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
                 ? 'Enter your Player ID in Step 2 to continue'
                 : !playerProfile?.verified
                 ? 'Verify your Player UID in Step 2'
-                : !selectedProduct
-                ? 'Select a Diamond Pack in Step 3'
+                : !selectedProduct || isSoldOut
+                ? isSoldOut
+                  ? 'Selected pack is sold out. Please select another pack in Step 3'
+                  : 'Select a Diamond Pack in Step 3'
                 : 'Choose a Payment Method in Step 4'}
             </span>
           </p>

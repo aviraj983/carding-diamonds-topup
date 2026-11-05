@@ -41,6 +41,9 @@ export default function App() {
     if (country === 'BD') {
       setCurrentCurrency('BDT');
       setSelectedPayment(PAYMENT_METHODS_BD[0]);
+      if (selectedProduct && (selectedProduct.soldOutInBD || selectedProduct.bdtPrice === 490)) {
+        setSelectedProduct(null);
+      }
     } else {
       setCurrentCurrency('INR');
       setSelectedPayment(PAYMENT_METHODS_IN[0]);

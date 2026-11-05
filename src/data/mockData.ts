@@ -35,6 +35,7 @@ export const TOPUP_PRODUCTS: TopupProduct[] = [
     basePriceUSD: 349 / 86.5,
     inrPrice: 349,
     bdtPrice: 490,
+    soldOutInBD: true,
     tag: 'STARTER PACK',
     tagColor: 'cyan',
     iconType: 'diamond',

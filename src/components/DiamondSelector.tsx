@@ -60,23 +60,36 @@ export const DiamondSelector: React.FC<DiamondSelectorProps> = ({
       {/* Products Grid: 2 Columns */}
       <div className="grid grid-cols-2 gap-2.5">
         {diamondProducts.map((product) => {
-          const isSelected = selectedProduct?.id === product.id;
+          const isSoldOut = curr.code === 'BDT' && Boolean(product.soldOutInBD || product.bdtPrice === 490);
+          const isSelected = selectedProduct?.id === product.id && !isSoldOut;
           const displayBonus = product.bonusDiamonds || 0;
           const totalDiamonds = product.diamonds + displayBonus;
 
           return (
             <div
               key={product.id}
-              onClick={() => onSelectProduct(product)}
-              className={`relative rounded-xl p-3 cursor-pointer transition-all duration-200 flex flex-col justify-between border ${
-                isSelected
-                  ? 'bg-[#1A1D24] border-2 border-amber-500 shadow-md shadow-amber-500/15 ring-1 ring-amber-500/30'
-                  : 'bg-black/40 border-white/5 hover:border-amber-500/40 hover:bg-white/5'
+              onClick={() => {
+                if (isSoldOut) return;
+                onSelectProduct(product);
+              }}
+              className={`relative rounded-xl p-3 transition-all duration-200 flex flex-col justify-between border ${
+                isSoldOut
+                  ? 'bg-black/30 border-red-500/20 opacity-60 cursor-not-allowed select-none'
+                  : isSelected
+                  ? 'bg-[#1A1D24] border-2 border-amber-500 shadow-md shadow-amber-500/15 ring-1 ring-amber-500/30 cursor-pointer'
+                  : 'bg-black/40 border-white/5 hover:border-amber-500/40 hover:bg-white/5 cursor-pointer'
               }`}
               id={`product-card-${product.id}`}
             >
               {/* Tag Badge */}
-              {product.tag && (
+              {isSoldOut ? (
+                <div className="absolute -top-2 right-2 z-10">
+                  <span className="text-[8px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider font-heading bg-red-600 text-white shadow-md shadow-red-600/30 flex items-center gap-1 border border-red-400/40">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                    SOLD OUT
+                  </span>
+                </div>
+              ) : product.tag ? (
                 <div className="absolute -top-2 right-2">
                   <span
                     className={`text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded-full tracking-wider font-heading shadow ${
@@ -90,18 +103,26 @@ export const DiamondSelector: React.FC<DiamondSelectorProps> = ({
                     {product.tag}
                   </span>
                 </div>
-              )}
+              ) : null}
 
               {/* Top info */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-base">
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-base ${
+                      isSoldOut
+                        ? 'bg-white/5 border border-white/10 grayscale opacity-60'
+                        : 'bg-amber-500/10 border border-amber-500/25'
+                    }`}
+                  >
                     💎
                   </div>
 
                   <div
                     className={`w-4 h-4 rounded-full flex items-center justify-center border transition-colors ${
-                      isSelected
+                      isSoldOut
+                        ? 'border-white/10 bg-black/40'
+                        : isSelected
                         ? 'bg-amber-500 border-amber-500 text-black'
                         : 'border-white/10 bg-black/40'
                     }`}
@@ -111,18 +132,32 @@ export const DiamondSelector: React.FC<DiamondSelectorProps> = ({
                 </div>
 
                 {/* Title / Amount */}
-                <h3 className="font-heading font-extrabold text-sm text-white tracking-wide leading-tight">
+                <h3
+                  className={`font-heading font-extrabold text-sm tracking-wide leading-tight ${
+                    isSoldOut ? 'text-gray-400 line-through decoration-red-500/50' : 'text-white'
+                  }`}
+                >
                   {product.title}
                 </h3>
 
                 {/* Diamonds & Bonus breakdown */}
                 <div className="mt-1 flex items-baseline gap-1 flex-wrap">
-                  <span className="text-lg font-black text-amber-500 font-display">
+                  <span
+                    className={`text-lg font-black font-display ${
+                      isSoldOut ? 'text-gray-500' : 'text-amber-500'
+                    }`}
+                  >
                     {totalDiamonds.toLocaleString()}
                   </span>
                   <span className="text-[10px] text-gray-400 font-medium">💎</span>
                   {displayBonus > 0 && (
-                    <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1 rounded border border-emerald-500/30">
+                    <span
+                      className={`text-[9px] font-bold px-1 rounded border ${
+                        isSoldOut
+                          ? 'text-gray-500 bg-white/5 border-white/10'
+                          : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30'
+                      }`}
+                    >
                       +{displayBonus} Bonus
                     </span>
                   )}
@@ -132,19 +167,25 @@ export const DiamondSelector: React.FC<DiamondSelectorProps> = ({
               {/* Price Button / Bottom */}
               <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between">
                 <div>
-                  <span className="font-mono text-sm font-black text-white">
+                  <span
+                    className={`font-mono text-sm font-black ${
+                      isSoldOut ? 'text-gray-500 line-through' : 'text-white'
+                    }`}
+                  >
                     {formatPrice(product)}
                   </span>
                 </div>
 
                 <span
                   className={`text-[10px] font-bold font-heading uppercase px-2 py-0.5 rounded-md transition-colors ${
-                    isSelected
+                    isSoldOut
+                      ? 'bg-red-500/15 text-red-400 border border-red-500/30 font-black'
+                      : isSelected
                       ? 'bg-amber-500 text-black font-extrabold'
                       : 'bg-white/5 text-gray-400'
                   }`}
                 >
-                  {isSelected ? '✓ Selected' : 'Select'}
+                  {isSoldOut ? 'Sold Out' : isSelected ? '✓ Selected' : 'Select'}
                 </span>
               </div>
             </div>
