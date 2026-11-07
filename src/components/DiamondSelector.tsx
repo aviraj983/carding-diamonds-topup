@@ -25,6 +25,9 @@ export const DiamondSelector: React.FC<DiamondSelectorProps> = ({
     if (curr.code === 'BDT' && product.bdtPrice) {
       return `${curr.symbol}${product.bdtPrice}`;
     }
+    if (curr.code === 'PKR' && product.pkrPrice) {
+      return `${curr.symbol}${product.pkrPrice}`;
+    }
     const raw = product.basePriceUSD * curr.rate;
     if (curr.code === 'IDR') {
       return `${curr.symbol} ${Math.round(raw / 1000) * 1000}`;

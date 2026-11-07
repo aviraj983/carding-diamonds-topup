@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { CountryCode, CurrencyCode, OrderItem, PaymentMethod, PlayerProfile, PromoCode, TopupProduct } from './types';
-import { TOPUP_PRODUCTS, PAYMENT_METHODS_IN, PAYMENT_METHODS_BD } from './data/mockData';
+import { TOPUP_PRODUCTS, PAYMENT_METHODS_IN, PAYMENT_METHODS_BD, PAYMENT_METHODS_PK } from './data/mockData';
 import { Header } from './components/Header';
 import { HeroBanner } from './components/HeroBanner';
 import { CountrySelectorStep } from './components/CountrySelectorStep';
@@ -44,6 +44,9 @@ export default function App() {
       if (selectedProduct && (selectedProduct.soldOutInBD || selectedProduct.bdtPrice === 490)) {
         setSelectedProduct(null);
       }
+    } else if (country === 'PK') {
+      setCurrentCurrency('PKR');
+      setSelectedPayment(PAYMENT_METHODS_PK[0]);
     } else {
       setCurrentCurrency('INR');
       setSelectedPayment(PAYMENT_METHODS_IN[0]);
