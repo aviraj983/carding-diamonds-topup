@@ -1,6 +1,6 @@
 export type CurrencyCode = 'INR' | 'USD' | 'BDT' | 'IDR' | 'BRL' | 'PKR' | 'EUR' | 'MYR' | 'PHP';
 
-export type CountryCode = 'IN' | 'BD';
+export type CountryCode = 'IN' | 'BD' | 'PK';
 
 export interface Currency {
   code: CurrencyCode;
@@ -30,6 +30,7 @@ export interface TopupProduct {
   basePriceUSD: number;
   inrPrice?: number;
   bdtPrice?: number;
+  pkrPrice?: number;
   soldOutInBD?: boolean;
   tag?: string;
   tagColor?: 'amber' | 'cyan' | 'red' | 'emerald' | 'purple';

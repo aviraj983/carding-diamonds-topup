@@ -101,3 +101,80 @@ body {
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
   animation: shine 3s infinite;
 }
+
+/* ─── Animated Green Tick Keyframes ─── */
+@keyframes checkmark-circle {
+  0% {
+    stroke-dashoffset: 160;
+    transform: rotate(-90deg);
+    opacity: 0;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    transform: rotate(-90deg);
+    opacity: 1;
+  }
+}
+
+@keyframes checkmark-draw {
+  0% {
+    stroke-dashoffset: 48;
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+@keyframes success-ripple {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+}
+
+@keyframes success-pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-checkmark-circle {
+  stroke-dasharray: 160;
+  stroke-dashoffset: 160;
+  transform-origin: center;
+  animation: checkmark-circle 0.65s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.animate-checkmark-draw {
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: checkmark-draw 0.5s cubic-bezier(0.65, 0, 0.45, 1) 0.35s forwards;
+}
+
+.animate-success-ripple {
+  animation: success-ripple 2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.animate-success-pop {
+  animation: success-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
