@@ -1,7 +1,7 @@
 import React from 'react';
 import { CountryCode, PaymentMethod } from '../types';
-import { PAYMENT_METHODS_IN, PAYMENT_METHODS_BD } from '../data/mockData';
-import { BKASH_LOGO, NAGAD_LOGO } from '../data/paymentLogos';
+import { PAYMENT_METHODS_IN, PAYMENT_METHODS_BD, PAYMENT_METHODS_PK } from '../data/mockData';
+import { BKASH_LOGO, NAGAD_LOGO, EASYPAISA_LOGO, JAZZCASH_LOGO } from '../data/paymentLogos';
 import { ShieldCheck, Check, Zap } from 'lucide-react';
 
 interface PaymentMethodStepProps {
@@ -25,20 +25,17 @@ const NagadLogo = () => (
   </div>
 );
 
-/* ─── Online Banking Logo (SVG inline – blue bank icon) ─── */
-const BankLogo = () => (
-  <div className="w-12 h-11 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-md shadow-black/50 border border-white/20 shrink-0">
-    <svg className="w-full h-full" viewBox="0 0 48 48" fill="none">
-      {/* Bank building icon */}
-      <path d="M24 4L4 16H44L24 4Z" fill="#1E3A8A"/>
-      <rect x="4" y="16" width="40" height="3" fill="#2563EB"/>
-      <rect x="8" y="21" width="5" height="14" rx="1" fill="#1E3A8A"/>
-      <rect x="17" y="21" width="5" height="14" rx="1" fill="#1E3A8A"/>
-      <rect x="26" y="21" width="5" height="14" rx="1" fill="#1E3A8A"/>
-      <rect x="35" y="21" width="5" height="14" rx="1" fill="#1E3A8A"/>
-      <rect x="4" y="36" width="40" height="4" rx="1" fill="#2563EB"/>
-      <rect x="2" y="40" width="44" height="3" rx="1" fill="#1E3A8A"/>
-    </svg>
+/* ─── Easypaisa Logo ─── */
+const EasypaisaLogo = () => (
+  <div className="w-12 h-11 rounded-xl bg-white p-1 flex items-center justify-center shadow-md shadow-black/50 border border-white/20 shrink-0">
+    <img src={EASYPAISA_LOGO} alt="Easypaisa" className="w-full h-full object-contain" />
+  </div>
+);
+
+/* ─── JazzCash Logo ─── */
+const JazzCashLogo = () => (
+  <div className="w-12 h-11 rounded-xl bg-white p-1 flex items-center justify-center shadow-md shadow-black/50 border border-white/20 shrink-0">
+    <img src={JAZZCASH_LOGO} alt="JazzCash" className="w-full h-full object-contain" />
   </div>
 );
 
@@ -76,16 +73,41 @@ const BD_CARD_CONFIG: Record<string, {
     badgeLabel: 'BANGLADESH',
     subtitle: 'Pay Using Nagad App',
   },
-  bank: {
-    Logo: BankLogo,
-    tagBg: 'bg-[#2563EB]',
+};
+
+/* ─── Payment method card config for Pakistan ─── */
+const PK_CARD_CONFIG: Record<string, {
+  Logo: React.FC;
+  tagBg: string;
+  tagText: string;
+  tagLabel: string;
+  badgeBg: string;
+  badgeBorder: string;
+  badgeText: string;
+  badgeLabel: string;
+  subtitle: string;
+}> = {
+  easypaisa: {
+    Logo: EasypaisaLogo,
+    tagBg: 'bg-[#00A859]',
     tagText: 'text-white',
-    tagLabel: 'ONLINE BANKING • 0% FEE',
-    badgeBg: 'bg-[#2563EB]/20',
-    badgeBorder: 'border-[#2563EB]/40',
-    badgeText: 'text-[#60A5FA]',
-    badgeLabel: 'BD BANKS',
-    subtitle: 'City Bank • BRAC Bank • DBBL • EBL & More',
+    tagLabel: 'EASYPAISA • 0% FEE',
+    badgeBg: 'bg-[#00A859]/20',
+    badgeBorder: 'border-[#00A859]/40',
+    badgeText: 'text-[#00E676]',
+    badgeLabel: 'PAKISTAN',
+    subtitle: 'Pay via Easypaisa App / Mobile Account',
+  },
+  jazzcash: {
+    Logo: JazzCashLogo,
+    tagBg: 'bg-[#ED1C24]',
+    tagText: 'text-white',
+    tagLabel: 'JAZZCASH • 0% FEE',
+    badgeBg: 'bg-[#ED1C24]/20',
+    badgeBorder: 'border-[#ED1C24]/40',
+    badgeText: 'text-[#FF5252]',
+    badgeLabel: 'PAKISTAN',
+    subtitle: 'Pay via JazzCash App / Mobile Account',
   },
 };
 
@@ -96,8 +118,10 @@ export const PaymentMethodStep: React.FC<PaymentMethodStepProps> = ({
   stepNumber = 4,
 }) => {
   const isBangladesh = country === 'BD';
+  const isPakistan = country === 'PK';
   const indiaMethods = PAYMENT_METHODS_IN;
   const bdMethods = PAYMENT_METHODS_BD;
+  const pkMethods = PAYMENT_METHODS_PK;
 
   return (
     <div className="bg-[#16181F] rounded-2xl border border-white/5 p-4 shadow-lg space-y-3.5" id="payment-method-section">
@@ -118,7 +142,79 @@ export const PaymentMethodStep: React.FC<PaymentMethodStepProps> = ({
         </div>
       </div>
 
-      {isBangladesh ? (
+      {isPakistan ? (
+        /* ── Pakistan Payment Options (Easypaisa / JazzCash) ── */
+        <div className="space-y-3">
+          {pkMethods.map((method) => {
+            const config = PK_CARD_CONFIG[method.id];
+            if (!config) return null;
+            const { Logo, tagBg, tagText, tagLabel, badgeBg, badgeBorder, badgeText, badgeLabel, subtitle } = config;
+            const isSelected = selectedPayment?.id === method.id;
+
+            return (
+              <div
+                key={method.id}
+                onClick={() => onSelectPayment(method)}
+                className={`relative rounded-xl p-3.5 cursor-pointer transition-all duration-200 border ${
+                  isSelected
+                    ? 'bg-[#1A1D24] border-2 border-amber-500 shadow-md shadow-amber-500/15 ring-1 ring-amber-500/30'
+                    : 'bg-black/40 border-white/5 hover:border-amber-500/40 hover:bg-white/5'
+                }`}
+                id={`payment-method-${method.id}`}
+              >
+                {/* Instant Tag */}
+                <div className="absolute -top-2.5 right-3">
+                  <span className={`${tagBg} ${tagText} text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider font-heading flex items-center gap-0.5 shadow`}>
+                    <Zap className="w-2.5 h-2.5 fill-current" />
+                    {tagLabel}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <Logo />
+
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-heading font-bold text-sm text-white leading-tight">
+                          {method.name}
+                        </h4>
+                        <span className={`px-1.5 py-0.2 rounded ${badgeBg} border ${badgeBorder} ${badgeText} font-mono text-[9px] font-bold`}>
+                          {badgeLabel}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-gray-400 mt-0.5">
+                        {subtitle}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`w-5 h-5 rounded-full flex items-center justify-center border transition-colors shrink-0 ${
+                      isSelected
+                        ? 'bg-amber-500 border-amber-500 text-black shadow'
+                        : 'border-white/20 bg-black/40'
+                    }`}
+                  >
+                    {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  </div>
+                </div>
+
+                {/* Info Row */}
+                <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[11px]">
+                  <div className="flex items-center gap-1 text-emerald-400 font-medium">
+                    <Zap className="w-3 h-3 fill-emerald-400" />
+                    <span>{method.instantBonusText || 'Instant Auto-Credit'} (0% Fee)</span>
+                  </div>
+                  <span className={isSelected ? 'text-amber-400 font-bold' : 'text-gray-400'}>
+                    {isSelected ? '✓ Selected' : 'Select'}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : isBangladesh ? (
         /* ── Bangladesh Payment Options (bKash / Nagad / Online Banking) ── */
         <div className="space-y-3">
           {bdMethods.map((method) => {
