@@ -23,7 +23,6 @@ export const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [activePaymentUrl, setActivePaymentUrl] = useState<string | null>(null);
 
   const curr = CURRENCIES[currency] || CURRENCIES.INR;
   const resolvedCountry = country || (curr.code === 'BDT' ? 'BD' : curr.code === 'PKR' ? 'PK' : 'IN');
@@ -77,8 +76,7 @@ export const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
       const data = await response.json();
       if (data.success && (data.paymentUrl || data.checkoutUrl)) {
         const url = data.paymentUrl || data.checkoutUrl;
-        setActivePaymentUrl(url);
-        // Redirect browser to payment cashier
+        // Direct instant redirect in one click
         window.location.href = url;
       } else {
         setErrorMessage(data.error || 'Failed to initialize payment gateway. Please try again.');
@@ -117,27 +115,6 @@ export const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
           </span>
         </div>
       </div>
-
-      {/* Direct Payment Link Box (in case of redirect delay / popup blockers) */}
-      {activePaymentUrl && (
-        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3.5 text-center space-y-2 animate-fade-in">
-          <p className="text-xs font-semibold text-emerald-400">
-            Payment link generated successfully!
-          </p>
-          <a
-            href={activePaymentUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 px-4 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-sm rounded-lg transition-colors shadow-lg"
-          >
-            <span>CLICK HERE TO OPEN PAYMENT CASHIER</span>
-            <ArrowRight className="w-4 h-4" />
-          </a>
-          <p className="text-[10px] text-gray-400">
-            Note: If testing from India, please use a VPN or proxy as Pakistani payment gateways may be restricted by Indian ISPs.
-          </p>
-        </div>
-      )}
 
       {/* Proceed to Payment Button */}
       <div>
