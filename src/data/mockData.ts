@@ -6,7 +6,7 @@ export const CURRENCIES: Record<string, Currency> = {
   BDT: { code: 'BDT', name: 'Bangladeshi Taka', symbol: '৳', rate: 122.0, flag: '🇧🇩' },
   IDR: { code: 'IDR', name: 'Indonesian Rupiah', symbol: 'Rp', rate: 16200, flag: '🇮🇩' },
   BRL: { code: 'BRL', name: 'Brazilian Real', symbol: 'R$', rate: 5.65, flag: '🇧🇷' },
-  PKR: { code: 'PKR', name: 'Pakistani Rupee', symbol: '₨', rate: 280.0, flag: '🇵🇰' },
+  PKR: { code: 'PKR', name: 'Pakistani Rupee', symbol: 'Rs.', rate: 280.0, flag: '🇵🇰' },
   EUR: { code: 'EUR', name: 'Euro', symbol: '€', rate: 0.92, flag: '🇪🇺' },
   MYR: { code: 'MYR', name: 'Malaysian Ringgit', symbol: 'RM', rate: 4.45, flag: '🇲🇾' },
   PHP: { code: 'PHP', name: 'Philippine Peso', symbol: '₱', rate: 58.0, flag: '🇵🇭' },
@@ -35,6 +35,7 @@ export const TOPUP_PRODUCTS: TopupProduct[] = [
     basePriceUSD: 349 / 86.5,
     inrPrice: 349,
     bdtPrice: 490,
+    pkrPrice: 1130,
     soldOutInBD: true,
     tag: 'STARTER PACK',
     tagColor: 'cyan',
@@ -49,6 +50,7 @@ export const TOPUP_PRODUCTS: TopupProduct[] = [
     basePriceUSD: 799 / 86.5,
     inrPrice: 799,
     bdtPrice: 1120,
+    pkrPrice: 2580,
     tag: '+10% BONUS',
     tagColor: 'amber',
     iconType: 'diamond',
@@ -63,6 +65,7 @@ export const TOPUP_PRODUCTS: TopupProduct[] = [
     basePriceUSD: 1299 / 86.5,
     inrPrice: 1299,
     bdtPrice: 1820,
+    pkrPrice: 4200,
     tag: '🔥 MOST POPULAR',
     tagColor: 'red',
     iconType: 'diamond',
@@ -77,6 +80,7 @@ export const TOPUP_PRODUCTS: TopupProduct[] = [
     basePriceUSD: 1899 / 86.5,
     inrPrice: 1899,
     bdtPrice: 2660,
+    pkrPrice: 6150,
     tag: '⚡ BEST VALUE',
     tagColor: 'emerald',
     iconType: 'diamond',
@@ -91,6 +95,7 @@ export const TOPUP_PRODUCTS: TopupProduct[] = [
     basePriceUSD: 2499 / 86.5,
     inrPrice: 2499,
     bdtPrice: 3500,
+    pkrPrice: 8090,
     tag: '👑 MEGA VIP',
     tagColor: 'purple',
     iconType: 'diamond',
@@ -104,6 +109,7 @@ export const TOPUP_PRODUCTS: TopupProduct[] = [
     basePriceUSD: 8999 / 86.5,
     inrPrice: 8999,
     bdtPrice: 12600,
+    pkrPrice: 29130,
     tag: '🔱 GOD WHALE PACK',
     tagColor: 'amber',
     iconType: 'diamond',
@@ -274,13 +280,26 @@ export const PAYMENT_METHODS_BD: PaymentMethod[] = [
     instantBonusText: 'Instant Auto-Credit',
     feeText: '0% Processing Fee',
   },
+];
+
+export const PAYMENT_METHODS_PK: PaymentMethod[] = [
   {
-    id: 'bank',
-    name: 'Online Banking',
-    category: 'netbanking',
-    icon: '🏦',
+    id: 'easypaisa',
+    name: 'Easypaisa - Pay Via Easypaisa',
+    category: 'wallet',
+    icon: '⚡',
     discountPercent: 0,
-    instantBonusText: 'All BD Banks Supported',
+    instantBonusText: 'Instant Auto-Credit',
+    feeText: '0% Processing Fee',
+    popular: true,
+  },
+  {
+    id: 'jazzcash',
+    name: 'JazzCash - Pay Via JazzCash',
+    category: 'wallet',
+    icon: '⚡',
+    discountPercent: 0,
+    instantBonusText: 'Instant Auto-Credit',
     feeText: '0% Processing Fee',
   },
 ];
@@ -288,6 +307,7 @@ export const PAYMENT_METHODS_BD: PaymentMethod[] = [
 export const PAYMENT_METHODS: PaymentMethod[] = [
   ...PAYMENT_METHODS_IN,
   ...PAYMENT_METHODS_BD,
+  ...PAYMENT_METHODS_PK,
 ];
 
 export const PROMO_CODES: PromoCode[] = [
