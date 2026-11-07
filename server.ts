@@ -106,7 +106,7 @@ async function startServer() {
   // Payment Create Order Endpoint (Dual Gateway: DivinePay for BD / WatchPays for IN)
   app.post("/api/payment/create-order", async (req, res) => {
     try {
-      const { amount, playerUid, diamonds, country, currency, paymentMethod } = req.body;
+      const { amount, playerUid, diamonds, country, currency, paymentMethod, mobile, cnic } = req.body;
 
       if (!amount) {
         return res.status(400).json({ success: false, error: "Amount is required" });
@@ -118,6 +118,124 @@ async function startServer() {
       const callbackUrl = `${appBaseUrl}/api/payment/callback`;
 
       const isBangladesh = country === "BD" || currency === "BDT" || paymentMethod === "bkash" || paymentMethod === "nagad" || paymentMethod === "bank";
+      const isPakistan = country === "PK" || currency === "PKR" || paymentMethod === "easypaisa" || paymentMethod === "jazzcash";
+
+      // ============================================
+      // Pakistan Gateway: EDPay (Easypaisa / JazzCash)
+      // ============================================
+      if (isPakistan) {
+        const edPayBaseUrl = process.env.EDPAY_BASE_URL || "https://ed-pay.space";
+        const edPayKeyId = process.env.EDPAY_KEY_ID || "pk_in_96a38eb305e2f97e";
+        const edPaySecret = process.env.EDPAY_SECRET || "sk_045cd192007c299d1e9f00e34cc4cc3323b70face12a41b4";
+        const formattedAmount = String(Math.round(amount || 0));
+        const merOrderNo = `FFPK_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
+        const returnUrl = `${appBaseUrl}/?status=success&orderId=${merOrderNo}`;
+
+        let cleanMobile = (mobile || "").replace(/[^\d]/g, "");
+        if (cleanMobile.length === 10 && cleanMobile.startsWith("3")) {
+          cleanMobile = "0" + cleanMobile;
+        }
+        if (!cleanMobile || cleanMobile.length !== 11 || !cleanMobile.startsWith("03")) {
+          cleanMobile = "03001234567";
+        }
+
+        // Pakistan Gateway: EasyPaisa (PK_WALLET_EASYPAISA) or JazzCash (PK_WALLET_JAZZCASH)
+        const isJazzCash = paymentMethod === "jazzcash" || paymentMethod === "PK_WALLET_JAZZCASH" || paymentMethod === "EDJC";
+        const payMethod = isJazzCash ? "PK_WALLET_JAZZCASH" : "PK_WALLET_EASYPAISA";
+
+        const edPayPayload: Record<string, string> = {
+          merOrderNo: merOrderNo,
+          amount: formattedAmount,
+          payMethod: payMethod,
+          mobile: cleanMobile,
+          returnUrl: returnUrl,
+          notifyUrl: callbackUrl,
+        };
+
+        if (playerUid) {
+          edPayPayload.accountName = `FF_${playerUid}`;
+        }
+        if (cnic) {
+          edPayPayload.cnic = String(cnic).replace(/[^\d]/g, "");
+        } else if (isJazzCash) {
+          edPayPayload.cnic = "3520112345671";
+        }
+
+        console.log("Sending EDPay PK Pay-in request:", JSON.stringify(edPayPayload, null, 2));
+
+        let responseData: any = null;
+        let paymentUrl: string | null = null;
+        let lastError = "";
+
+        // Retry up to 3 times with 2s delay (EDPay upstream can be intermittent)
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          // Generate a fresh merOrderNo for each attempt to avoid duplicate rejections
+          const attemptOrderNo = `FFPK_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
+          edPayPayload.merOrderNo = attemptOrderNo;
+
+          try {
+            console.log(`EDPay attempt ${attempt}/3 (orderNo: ${attemptOrderNo})...`);
+            const resp = await fetch(`${edPayBaseUrl}/api/public/payment/order/create`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+                "X-EDPay-Key-Id": edPayKeyId,
+                "X-EDPay-Secret": edPaySecret,
+              },
+              body: JSON.stringify(edPayPayload),
+            });
+
+            const rawText = await resp.text();
+            console.log(`EDPay attempt ${attempt} response:`, resp.status, rawText.substring(0, 300));
+
+            if (resp.status === 502 || rawText.includes("error code: 502")) {
+              lastError = "upstream_502";
+              if (attempt < 3) {
+                await new Promise((r) => setTimeout(r, 2000));
+                continue;
+              }
+              break;
+            }
+
+            try {
+              responseData = JSON.parse(rawText);
+            } catch (e) {}
+
+            if (responseData && responseData.code === 0 && responseData.data?.paymentLink) {
+              paymentUrl = responseData.data.paymentLink;
+            } else {
+              lastError = responseData?.msg || "Unknown gateway error";
+            }
+            break;
+          } catch (e: any) {
+            console.error(`EDPay attempt ${attempt} exception:`, e?.message || e);
+            lastError = "network";
+            if (attempt < 3) {
+              await new Promise((r) => setTimeout(r, 2000));
+            }
+          }
+        }
+
+        if (paymentUrl) {
+          return res.status(200).json({
+            success: true,
+            paymentUrl: paymentUrl,
+            checkoutUrl: paymentUrl,
+            orderId: responseData?.data?.merOrderNo || merOrderNo,
+            orderNo: responseData?.data?.orderNo,
+            amount: responseData?.data?.amount || formattedAmount,
+          });
+        }
+
+        const errorMsg =
+          lastError === "upstream_502"
+            ? "EDPay upstream payment provider is temporarily down (502). This is an issue on EDPay/Rinvexpay side — please try again in a few minutes or contact your EDPay account manager."
+            : lastError === "network"
+            ? "Network error connecting to Pakistan payment gateway. Please check your internet and try again."
+            : lastError || "Failed to initialize Pakistan payment gateway. Please try again.";
+        return res.status(200).json({ success: false, error: errorMsg });
+      }
 
       // ============================================
       // Bangladesh Gateway: DivinePay (bKash / Nagad / Bank)
